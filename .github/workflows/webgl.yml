@@ -197,6 +197,9 @@ jobs:
       - name: Apply gameplay and performance patches
         run: python3 ci/patch_game.py project
 
+      - name: Install WebGL co-op client files
+        run: python3 ci/install_webgl_coop.py project
+
       - name: Shrink non-sprite textures only
         run: |
           python3 - <<'PYEOF'
