@@ -328,7 +328,7 @@ public class fullscreenManager : MonoBehaviour
 		resolucionesDropDown.RefreshShownValue();
 		resolucionesDropDown.interactable = sizes.Count > 1;
 
-		if (fromSave && (sizes[selected].x != Screen.width || sizes[selected].y != Screen.height))
+		if (false && fromSave && (sizes[selected].x != Screen.width || sizes[selected].y != Screen.height))
 		{
 			Screen.SetResolution(sizes[selected].x, sizes[selected].y, Screen.fullScreen);
 		}
@@ -426,6 +426,21 @@ write(p, text)
 p = S + '/LanguageChangerMenu.cs'
 s_ = read(p)
 s_ = sub_once(s_, 'new List<string> { "Low", "Medium", "High" }', 'new List<string> { "Optimised", "Medium", "Max settings" }', 'English quality labels')
+write(p, s_)
+
+# 6c2. Only two graphics options: "Optimised" (= quality level 0) and "Max settings" (= level 2). "Medium" is gone.
+#      Dropdown entry 0 -> level 0, entry 1 -> level 2. A saved "Medium" (level 1) is treated as Optimised.
+p = S + '/GraphicSettings.cs'
+s_ = read(p)
+s_ = sub_once(s_, 'graphicsDropdown.AddOptions(list);', 'if (list.Count == 3)\n\t\t{\n\t\t\tlist.RemoveAt(1);\n\t\t}\n\t\tgraphicsDropdown.AddOptions(list);', 'graphics options list')
+s_ = sub_once(s_, 'int num = StartQuality();', 'int num = StartQuality() >= 2 ? 2 : 0;', 'graphics start level')
+s_ = sub_once(s_, 'graphicsDropdown.value = num;', 'graphicsDropdown.value = num >= 2 ? 1 : 0;', 'graphics dropdown value')
+s_ = sub_once(s_, 'ChangeGraphicsQuality(graphicsDropdown.value);', 'ChangeGraphicsQuality(graphicsDropdown.value >= 1 ? 2 : 0);', 'graphics change handler')
+write(p, s_)
+# the options menu rewrites the dropdown labels per language (3 entries): drop the middle one there too
+p = S + '/LanguageChangerMenu.cs'
+s_ = read(p)
+s_ = sub_once(s_, 'int value = dropdown.value;', 'if (dropdown == dropdownGraphics && options.Count == 3)\n\t\t{\n\t\t\toptions = new List<string> { options[0], options[2] };\n\t\t}\n\t\tint value = dropdown.value;', 'language changer dropdown update')
 write(p, s_)
 
 # 6d. Cameras render in HDR, but the workflow turns every post-processing layer off, so nothing ever
@@ -547,6 +562,8 @@ shutil.copy(HERE + '/ToolbarKeyOption.cs', S + '/ToolbarKeyOption.cs')
 shutil.copy(HERE + '/DevMenu.jslib', A + '/Plugins/WebGL/DevMenu.jslib')
 shutil.copy(HERE + '/LookLab.jslib', A + '/Plugins/WebGL/LookLab.jslib')
 shutil.copy(HERE + '/SoftSkin.cs', S + '/SoftSkin.cs')
+shutil.copy(HERE + '/FaceCopy.cs', S + '/FaceCopy.cs')
+shutil.copy(HERE + '/OptionsMenuTweaks.cs', S + '/OptionsMenuTweaks.cs')
 shutil.copy(HERE + '/CheatMenu.cs', S + '/CheatMenu.cs')
 shutil.copy(HERE + '/ExperimentalMenu.cs', S + '/ExperimentalMenu.cs')
 # SoftSkin needs a KNOWN script GUID, because section 9 points the scenes at it.
@@ -633,36 +650,22 @@ for scene in ('Nightmare', 'SampleScene'):
         print(scene + ': toolbar frame drawn at its natural width')
 
 # =====================================================================================
-# 10. Skip-tutorial key: ESC the first time, TAB from then on.
+# 10. Skip-tutorial key: always TAB (it used to be ESC the first time).
 #     (the hint text is rewritten at runtime by dropdownControls*.cs, so the labels are patched there too)
 # =====================================================================================
 write(S + '/SkipKey.cs', """using UnityEngine;
 
-// First time the tutorial is skipped it takes ESC (so players are nudged to try the tutorial first).
-// Once that has happened, skipping takes TAB (quicker), and the on-screen hint shows the right key.
+// Skipping the tutorial always uses TAB (the hint text shows [TAB]).
 public static class SkipKey
 {
-	private const string Pref = "pp_skipKeyLearned";
-
-	public static bool Learned
-	{
-		get { return PlayerPrefs.GetInt(Pref, 0) == 1; }
-	}
-
 	public static string Label
 	{
-		get { return Learned ? "TAB" : "ESC"; }
+		get { return "TAB"; }
 	}
 
 	public static bool Pressed()
 	{
-		bool hit = Learned ? Input.GetKeyDown(KeyCode.Tab) : Input.GetKeyDown(KeyCode.Escape);
-		if (hit)
-		{
-			PlayerPrefs.SetInt(Pref, 1);
-			PlayerPrefs.Save();
-		}
-		return hit;
+		return Input.GetKeyDown(KeyCode.Tab);
 	}
 }
 """)
@@ -678,7 +681,7 @@ for fname in ('dropdownControls.cs', 'dropdownControlsNightmare.cs'):
     assert n_ >= 8, fname + ': only %d hint labels patched' % n_
     write(p_, s_)
     print(fname + ': %d skip-tutorial hints now follow SkipKey' % n_)
-print('Skip tutorial: ESC first time, TAB afterwards')
+print('Skip tutorial: always TAB')
 
 # =====================================================================================
 # 11. Deer: trigger range halved (3.5 -> 1.75). The controller re-applies defaultRadius to the sphere every frame,

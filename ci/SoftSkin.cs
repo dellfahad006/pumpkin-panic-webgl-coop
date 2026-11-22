@@ -28,6 +28,7 @@ public class SoftSkin : MonoBehaviour
 	public const float DefaultBrightness = 1.34f; // the value that matched the original sprites' look in testing
 	public static float Brightness = DefaultBrightness; // multiplies the tint of every skinned part
 	public static float PlayerBrightness = 1f;     // extra multiplier for the player's cloak only (night tuning)
+	public static float CloakAuto = 1f;            // set by the Experimental menu ("cloak follows lantern"); 1 = no effect
 	public static bool WorldSpace;           // draw un-parented in world space (breaks the sorting group!)
 	public static int SortOffset;            // added to the sorting order
 	public static bool ShowOriginal;         // also draw the original sprite (overlay, to compare)
@@ -260,7 +261,7 @@ public class SoftSkin : MonoBehaviour
 		bool overlay = exp && ShowOriginal;
 		if (isPlayer)
 		{
-			bright *= PlayerBrightness;
+			bright *= PlayerBrightness * CloakAuto;
 		}
 
 		if (world != inWorld)
