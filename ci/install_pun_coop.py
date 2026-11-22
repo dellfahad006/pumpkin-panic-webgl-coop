@@ -54,7 +54,7 @@ def import_unitypackage(package_bytes: bytes, project: Path) -> None:
                 pathname_member = members.get(folder + "/pathname")
                 if pathname_member is None:
                     continue
-                raw_path = archive.extractfile(pathname_member).read().decode("utf-8", "replace").strip()
+                raw_path = archive.extractfile(pathname_member).read().decode("utf-8", "replace").splitlines()[0].strip()
                 if not raw_path:
                     continue
                 destination = safe_project_path(project, raw_path)
