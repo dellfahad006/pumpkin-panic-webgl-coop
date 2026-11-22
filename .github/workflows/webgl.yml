@@ -657,7 +657,7 @@ jobs:
       - name: Show end of Unity log if failed
         if: failure()
         run: |
-          for f in photon-settings.log unity-build.log; do
+          for f in photon-validation.log unity-build.log; do
             if [ -f "$f" ]; then
               echo "===== $f ====="
               tail -n 120 "$f" | cut -c1-300
@@ -670,7 +670,7 @@ jobs:
         with:
           name: unity-build-diagnostic-logs
           path: |
-            photon-settings.log
+            photon-validation.log
             unity-build.log
           if-no-files-found: warn
           retention-days: 7
