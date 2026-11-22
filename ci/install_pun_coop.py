@@ -232,7 +232,7 @@ def main() -> int:
     verify_pun_version(project)
     configure_photon_app_id(project)
     install_port(project)
-    editor_source = Path(__file__).parent / "ci/pun-coop/Assets/Editor/GeneratePhotonServerSettings.cs"
+    editor_source = PORT_ROOT / "Assets/Editor/GeneratePhotonServerSettings.cs"
     editor_target = project / "Assets/Editor/GeneratePhotonServerSettings.cs"
     editor_target.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(editor_source, editor_target)
