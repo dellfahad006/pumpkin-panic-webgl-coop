@@ -33,28 +33,11 @@ mergeInto(LibraryManager.library, {
       window.alert=function(message){record("ALERT_CALLED",{message:str(message),stack:(new Error("alert caller")).stack});return oldAlert.apply(window,arguments);};
     }
 
-    if(window.WebSocket) {
-      var NativeWS=window.WebSocket;
-      try {
-        window.WebSocket=new Proxy(NativeWS,{
-          construct:function(Target,args) {
-            var url=str(args[0]), id="ws-"+Date.now()+"-"+Math.floor(Math.random()*1e6);
-            record("WS_CONSTRUCT",{id:id,url:url,protocols:args.length>1?str(args[1]):"default"});
-            var ws;
-            try { ws=Reflect.construct(Target,args,Target); }
-            catch(e){record("WS_CONSTRUCTOR_THROW",{id:id,url:url,error:str(e)});throw e;}
-            record("WS_CREATED",{id:id,url:url,readyState:ws.readyState});
-            ws.addEventListener("open",function(){record("WS_OPEN",{id:id,url:url,protocol:ws.protocol,extensions:ws.extensions});});
-            ws.addEventListener("error",function(){record("WS_ERROR",{id:id,url:url,readyState:ws.readyState});});
-            ws.addEventListener("close",function(e){record("WS_CLOSE",{id:id,url:url,code:e.code,reason:e.reason,clean:e.wasClean,readyState:ws.readyState});});
-            var count=0;
-            ws.addEventListener("message",function(e){count++;if(count<=12)record("WS_MESSAGE",{id:id,count:count,type:typeof e.data,size:typeof e.data==="string"?e.data.length:(e.data&&e.data.byteLength)||"unknown"});});
-            return ws;
-          }
-        });
-        record("WS_HOOK_INSTALLED",true);
-      } catch(e) {record("WS_HOOK_FAILED",str(e));}
-    } else record("WS_UNAVAILABLE",true);
+    // Isolation build: do not replace/wrap the native WebSocket constructor.
+    // The previous Proxy hook may affect PUN's WebGL socket implementation.
+    // Keep the browser's native WebSocket untouched for this A/B test.
+    record("WS_HOOK_DISABLED_FOR_ISOLATION", {nativeWebSocket:typeof window.WebSocket});
+
 
     if(window.IDBFactory && IDBFactory.prototype.open) {
       try {
