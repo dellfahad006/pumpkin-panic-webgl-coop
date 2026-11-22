@@ -116,6 +116,15 @@ def find_pun_network_file(project: Path) -> Path | None:
     return candidates[0] if candidates else None
 
 
+def patch_websocket_jslib_for_unity2020(project: Path) -> None:
+    for jslib in (project / 'Assets').rglob('WebSocket.jslib'):
+        txt = jslib.read_text(encoding='utf-8', errors='replace')
+        if 'makeDynCall' in txt:
+            pat = r'\{\{\{\s*makeDynCall\(\s*([\x27"])([^\x27"]+)\1\s*,\s*([\x27"])([^\x27"]+)\3\s*\)\s*\}\}\}\(([^)]*)\)'
+            jslib.write_text(re.sub(pat, r"Runtime.dynCall('\2', \4, [\5])", txt), encoding='utf-8')
+            log(f'Patched {jslib.relative_to(project)} for Unity 2020.3 WebGL')
+
+
 def verify_pun_version(project: Path) -> None:
     source = find_pun_network_file(project)
     if source is None:
@@ -234,6 +243,7 @@ def main() -> int:
     if find_pun_network_file(project) is None:
         download_pun_package(project)
     verify_pun_version(project)
+    patch_websocket_jslib_for_unity2020(project)
     configure_photon_app_id(project)
     install_port(project)
     editor_source = PORT_ROOT / "Assets/Editor/GeneratePhotonServerSettings.cs"
