@@ -823,7 +823,6 @@ public sealed class Plugin : MonoBehaviour
 
 	private static int? _replicatedChallengeChoice;
 
-	private static int _hostChallengeChoice;
 
 	private static bool _checkingRemoteDockContact;
 
@@ -6026,6 +6025,27 @@ public sealed class Plugin : MonoBehaviour
 		return ReadField<GameObject[]>(_nightmare, $"challenges{stage + 1}");
 	}
 
+	internal static int SelectNightmareChallenge(int stage, int optionCount)
+	{
+		if (optionCount <= 0)
+		{
+			return 0;
+		}
+		int choice = _replicatedChallengeChoice.HasValue
+			? _replicatedChallengeChoice.Value
+			: UnityEngine.Random.Range(0, optionCount);
+		if (choice < 0 || choice >= optionCount)
+		{
+			choice = 0;
+		}
+		Plugin instance = _instance;
+		if (!_replicatedChallengeChoice.HasValue && instance != null && instance._lobby.HasValue && !IsGuest && stage >= 0 && stage < instance._nightmareChoices.Length)
+		{
+			instance._nightmareChoices[stage] = (byte)(choice + 1);
+		}
+		return choice;
+	}
+
 	private bool CanIssueNightmareChallenge(challengesNightmare shrine)
 	{
 		if (((Behaviour)shrine).isActiveAndEnabled && !_boatWon && !_coopMatchOverAnnounced && ReadField<bool>(shrine, "canInteract"))
@@ -6051,10 +6071,6 @@ public sealed class Plugin : MonoBehaviour
 			finally
 			{
 				_replicatedChallengeChoice = null;
-			}
-			if (!replica)
-			{
-				_nightmareChoices[num] = (byte)(_hostChallengeChoice + 1);
 			}
 			GameObject val = ChallengeOptions(num)[_nightmareChoices[num] - 1];
 			_nightmareChallenges[num] = val.GetComponentInChildren<challengeProgress>(true);
@@ -6116,6 +6132,19 @@ public sealed class Plugin : MonoBehaviour
 				_pendingNightmareState = null;
 			}
 			return;
+		}
+		for (int i = 0; i < 4; i++)
+		{
+			if (_nightmareChoices[i] == 0 || (Object)(object)_nightmareChallenges[i] != (Object)null)
+			{
+				continue;
+			}
+			GameObject[] options = ChallengeOptions(i);
+			int selected = _nightmareChoices[i] - 1;
+			if (selected >= 0 && selected < options.Length && (Object)(object)options[selected] != (Object)null)
+			{
+				_nightmareChallenges[i] = options[selected].GetComponentInChildren<challengeProgress>(true);
+			}
 		}
 		if (!_coopMatchOverAnnounced && !_boatWon && !NightmareBoatReleased())
 		{
