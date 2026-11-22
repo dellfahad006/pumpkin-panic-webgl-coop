@@ -193,7 +193,7 @@ namespace PumpkinPanicCoop.Runtime
             object protocol;
             if (PhotonNetwork.CurrentRoom == null ||
                 !PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue(RoomProtocolKey, out protocol) ||
-                Convert.ToByte(protocol) != ProtocolVersion)
+                !(protocol is byte) || (byte)protocol != ProtocolVersion)
             {
                 LastError = "This room uses an incompatible co-op protocol version.";
                 pendingRejoinRoomCode = null;
