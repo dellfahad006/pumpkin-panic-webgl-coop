@@ -10,7 +10,7 @@ namespace PumpkinPanicCoop.Runtime
     {
         private string roomCode = "";
         private string nickname = "Farmer";
-        private string status = "Connecting to multiplayer...";
+        private string status = "Click Connect to enable online co-op.";
         private bool expanded = true;
         private PumpkinPanicCoop.Transport.PhotonSteamTransport transport;
 
@@ -51,10 +51,16 @@ namespace PumpkinPanicCoop.Runtime
                 else status = "Joining room...";
             }
             GUI.enabled = true;
+            if (!ready && GUILayout.Button("Connect to Photon"))
+            {
+                status = "Starting Photon connection...";
+                if (PhotonRoomService.Instance != null) PhotonRoomService.Instance.Connect();
+            }
             if (!ready)
             {
                 string error = PhotonRoomService.Instance != null ? PhotonRoomService.Instance.LastError : string.Empty;
-                status = string.IsNullOrEmpty(error) ? "Connecting to Photon..." : error;
+                if (!string.IsNullOrEmpty(error)) status = error;
+                else if (status != "Starting Photon connection...") status = "Not connected. Click Connect to Photon.";
             }
             GUILayout.Label(status);
             GUILayout.EndArea();
