@@ -105,6 +105,10 @@ def download_pun_package(project: Path) -> None:
     if not package_bytes:
         raise RuntimeError("The PUN SDK download returned an empty file")
     import_unitypackage(package_bytes, project)
+    for nested_pkg in sorted((project / "Assets").rglob("*.unitypackage")):
+        log(f"Unpacking nested Unity package: {nested_pkg.relative_to(project)}")
+        import_unitypackage(nested_pkg.read_bytes(), project)
+        nested_pkg.unlink()
 
 
 def find_pun_network_file(project: Path) -> Path | None:
