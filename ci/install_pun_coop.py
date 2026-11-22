@@ -177,7 +177,7 @@ def install_port(project: Path) -> None:
         log("Game-script hooks already present; skipping patch")
 
     assets = PORT_ROOT / "Assets"
-    for relative in (Path("Scripts/PumpkinPanicCoop"), Path("Plugins/WebGL/PumpkinPanicVisibility.jslib")):
+    for relative in (Path("Scripts/PumpkinPanicCoop"), Path("Plugins/WebGL/PumpkinPanicVisibility.jslib"), Path("Plugins/WebGL/PumpkinPanicForensics.jslib")):
         source = assets / relative
         destination = project / "Assets" / relative
         if source.is_dir():
