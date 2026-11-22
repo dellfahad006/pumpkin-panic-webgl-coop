@@ -32,7 +32,7 @@ namespace PumpkinPanicCoop.Runtime
                 }
 
                 GameObject root = new GameObject("PumpkinPanicCoop_Runtime");
-                Object.DontDestroyOnLoad(root);
+                UnityEngine.Object.DontDestroyOnLoad(root);
                 Debug.Log("[PumpkinPanicCoop][BOOT] Persistent root created.");
 
                 Debug.Log("[PumpkinPanicCoop][BOOT] Adding PhotonRoomService (its Awake starts Photon connection).");
