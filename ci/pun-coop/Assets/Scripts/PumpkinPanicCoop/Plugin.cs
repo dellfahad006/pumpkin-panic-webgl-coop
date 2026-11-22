@@ -4726,7 +4726,7 @@ public sealed class Plugin : MonoBehaviour
 			SetLobbyButtonState(_applyLobbyCapacity, canEditLobbyCapacity);
 		}
 		ref Lobby? lobby = ref _lobby;
-		? val;
+		SteamId? val;
 		if (!lobby.HasValue)
 		{
 			val = default(SteamId);
