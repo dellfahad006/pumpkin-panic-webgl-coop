@@ -95,6 +95,10 @@ jobs:
           new_content, count2 = re.subn(r'(webGLCompressionFormat:\s*)\d+', r'\g<1>2', new_content)
           if count2 != 1: sys.exit(1)
 
+          # Diagnostic-only WebGL build: include full managed exception stack traces.
+          new_content, count3 = re.subn(r'(webGLExceptionSupport:\\s*)\\d+', r'\\g<1>2', new_content)
+          if count3 != 1: sys.exit(1)
+
           with open(file_path, 'w', encoding='utf-8') as f:
               f.write(new_content)
           print("Successfully patched ColorSpace and Compression.")
