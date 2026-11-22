@@ -6571,7 +6571,7 @@ public sealed class Plugin : MonoBehaviour
 		Lobby value = _lobby.Value;
 		if ((ulong)(_lobbySessionHost) != (ulong)(SteamClient.SteamId))
 		{
-			if (!(value.GetData("ppcoop_closed_by") == (ulong)(_lobbySessionHost).ToString()))
+			if (value.GetData("ppcoop_closed_by") != ((ulong)_lobbySessionHost).ToString())
 			{
 				Scene activeScene = SceneManager.GetActiveScene();
 				if (!(activeScene.name != "MainMenu") || (ulong)(value.Owner.Id) == (ulong)(_lobbySessionHost))
@@ -9374,11 +9374,11 @@ public sealed class Plugin : MonoBehaviour
 		if ((Object)(object)val6 != (Object)null)
 		{
 			Material sharedMaterial = val6.sharedMaterial;
-			if (sharedMaterial == cropFields.CroppedDirt?.GetValue(crop))
+			if (sharedMaterial == (cropFields.CroppedDirt?.GetValue(crop) as Material))
 			{
 				material = 1;
 			}
-			if (sharedMaterial == cropFields.WetCroppedDirt?.GetValue(crop))
+			if (sharedMaterial == (cropFields.WetCroppedDirt?.GetValue(crop) as Material))
 			{
 				material = 2;
 			}
