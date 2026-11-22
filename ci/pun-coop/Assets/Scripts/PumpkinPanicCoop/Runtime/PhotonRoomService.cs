@@ -189,8 +189,24 @@ namespace PumpkinPanicCoop.Runtime
         public void OnCreateRoomFailed(short returnCode, string message) { LastError = message; RoomCreateFailed?.Invoke(message); }
         public void OnJoinedRoom()
         {
+            // Reject rooms created by an incompatible packet-protocol version.
+            object protocol;
+            if (PhotonNetwork.CurrentRoom == null ||
+                !PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue(RoomProtocolKey, out protocol) ||
+                Convert.ToByte(protocol) != ProtocolVersion)
+            {
+                LastError = "This room uses an incompatible co-op protocol version.";
+                pendingRejoinRoomCode = null;
+                lastRoomCode = null;
+                reconnecting = false;
+                reconnectAndRejoinInFlight = false;
+                RoomJoinFailed?.Invoke(LastError);
+                PhotonNetwork.LeaveRoom(false);
+                return;
+            }
+
             LastError = string.Empty;
-            lastRoomCode = PhotonNetwork.CurrentRoom != null ? PhotonNetwork.CurrentRoom.Name : lastRoomCode;
+            lastRoomCode = PhotonNetwork.CurrentRoom.Name;
             pendingRejoinRoomCode = null;
             reconnecting = false;
             reconnectAndRejoinInFlight = false;
