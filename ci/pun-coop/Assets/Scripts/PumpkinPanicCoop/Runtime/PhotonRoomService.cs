@@ -38,33 +38,85 @@ namespace PumpkinPanicCoop.Runtime
 
         private void Awake()
         {
-            if (Instance != null && Instance != this) { Destroy(gameObject); return; }
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-            PhotonNetwork.AutomaticallySyncScene = false;
-            PhotonNetwork.KeepAliveInBackground = 60f;
-            // SetMatchPaused uses Time.timeScale = 0; keep PUN event dispatching in LateUpdate.
-            PhotonNetwork.MinimalTimeScaleToDispatchInFixedUpdate = 0f;
-            string userId = PlayerPrefs.GetString("PumpkinPanicPhotonUserId", string.Empty);
-            if (string.IsNullOrEmpty(userId))
+            Debug.Log("[PumpkinPanicCoop][PHOTON] PhotonRoomService.Awake entered.");
+            try
             {
-                userId = Guid.NewGuid().ToString("N");
-                PlayerPrefs.SetString("PumpkinPanicPhotonUserId", userId);
-                PlayerPrefs.Save();
+                if (Instance != null && Instance != this)
+                {
+                    Debug.LogWarning("[PumpkinPanicCoop][PHOTON] Duplicate PhotonRoomService destroyed.");
+                    Destroy(gameObject);
+                    return;
+                }
+
+                Instance = this;
+                DontDestroyOnLoad(gameObject);
+                Debug.Log("[PumpkinPanicCoop][PHOTON] Persistent service registered.");
+
+                PhotonNetwork.AutomaticallySyncScene = false;
+                PhotonNetwork.KeepAliveInBackground = 60f;
+                // SetMatchPaused uses Time.timeScale = 0; keep PUN event dispatching in LateUpdate.
+                PhotonNetwork.MinimalTimeScaleToDispatchInFixedUpdate = 0f;
+
+                string userId = PlayerPrefs.GetString("PumpkinPanicPhotonUserId", string.Empty);
+                if (string.IsNullOrEmpty(userId))
+                {
+                    userId = Guid.NewGuid().ToString("N");
+                    PlayerPrefs.SetString("PumpkinPanicPhotonUserId", userId);
+                    PlayerPrefs.Save();
+                    Debug.Log("[PumpkinPanicCoop][PHOTON] Generated and persisted a Photon user ID.");
+                }
+
+                PhotonNetwork.AuthValues = new AuthenticationValues(userId);
+                PhotonNetwork.SendRate = 30;
+                PhotonNetwork.SerializationRate = 20;
+                PhotonNetwork.AddCallbackTarget(this);
+                Debug.Log("[PumpkinPanicCoop][PHOTON] Callback target registered; state=" +
+                    PhotonNetwork.NetworkingClient.State + ", connected=" + PhotonNetwork.IsConnected +
+                    ", ready=" + PhotonNetwork.IsConnectedAndReady);
+
+                Connect();
+                Debug.Log("[PumpkinPanicCoop][PHOTON] Awake completed; state=" +
+                    PhotonNetwork.NetworkingClient.State + ", connected=" + PhotonNetwork.IsConnected);
             }
-            PhotonNetwork.AuthValues = new AuthenticationValues(userId);
-            PhotonNetwork.SendRate = 30;
-            PhotonNetwork.SerializationRate = 20;
-            PhotonNetwork.AddCallbackTarget(this);
-            Connect();
+            catch (Exception exception)
+            {
+                LastError = "Photon startup exception: " + exception.Message;
+                Debug.LogError("[PumpkinPanicCoop][PHOTON][FATAL] Exception in PhotonRoomService.Awake: " + exception);
+                throw;
+            }
         }
 
         public void Connect()
         {
-            if (PhotonNetwork.IsConnected || PhotonNetwork.IsConnectedAndReady) return;
-            PhotonNetwork.GameVersion = "pumpkin-panic-webgl-coop-1";
-            if (string.IsNullOrEmpty(PhotonNetwork.NickName)) PhotonNetwork.NickName = "Farmer";
-            PhotonNetwork.ConnectUsingSettings();
+            Debug.Log("[PumpkinPanicCoop][PHOTON] Connect requested; state=" +
+                PhotonNetwork.NetworkingClient.State + ", connected=" + PhotonNetwork.IsConnected +
+                ", ready=" + PhotonNetwork.IsConnectedAndReady);
+
+            if (PhotonNetwork.IsConnected || PhotonNetwork.IsConnectedAndReady)
+            {
+                Debug.Log("[PumpkinPanicCoop][PHOTON] Connect skipped because Photon is already connected.");
+                return;
+            }
+
+            try
+            {
+                PhotonNetwork.GameVersion = "pumpkin-panic-webgl-coop-1";
+                if (string.IsNullOrEmpty(PhotonNetwork.NickName)) PhotonNetwork.NickName = "Farmer";
+                Debug.Log("[PumpkinPanicCoop][PHOTON] Calling ConnectUsingSettings; WebGL=" +
+                    (Application.platform == RuntimePlatform.WebGLPlayer) + ", gameVersion=" +
+                    PhotonNetwork.GameVersion + ", nickname=" + PhotonNetwork.NickName);
+
+                bool started = PhotonNetwork.ConnectUsingSettings();
+                Debug.Log("[PumpkinPanicCoop][PHOTON] ConnectUsingSettings returned " + started +
+                    "; state=" + PhotonNetwork.NetworkingClient.State + ", connected=" +
+                    PhotonNetwork.IsConnected + ", ready=" + PhotonNetwork.IsConnectedAndReady);
+            }
+            catch (Exception exception)
+            {
+                LastError = "ConnectUsingSettings exception: " + exception.Message;
+                Debug.LogError("[PumpkinPanicCoop][PHOTON][FATAL] ConnectUsingSettings threw: " + exception);
+                throw;
+            }
         }
 
         public bool CreateRoom(int requestedCapacity)
@@ -148,9 +200,13 @@ namespace PumpkinPanicCoop.Runtime
             return new string(code);
         }
 
-        public void OnConnected() { }
+        public void OnConnected()
+        {
+            Debug.Log("[PumpkinPanicCoop][PHOTON] OnConnected callback; state=" + PhotonNetwork.NetworkingClient.State);
+        }
         public void OnConnectedToMaster()
         {
+            Debug.Log("[PumpkinPanicCoop][PHOTON] OnConnectedToMaster callback; state=" + PhotonNetwork.NetworkingClient.State);
             LastError = string.Empty;
             if (reconnecting && !reconnectAndRejoinInFlight && !string.IsNullOrEmpty(pendingRejoinRoomCode))
             {
@@ -162,11 +218,23 @@ namespace PumpkinPanicCoop.Runtime
                 }
             }
         }
-        public void OnRegionListReceived(RegionHandler regionHandler) { }
-        public void OnCustomAuthenticationResponse(Dictionary<string, object> data) { }
-        public void OnCustomAuthenticationFailed(string debugMessage) { LastError = debugMessage; }
+        public void OnRegionListReceived(RegionHandler regionHandler)
+        {
+            Debug.Log("[PumpkinPanicCoop][PHOTON] Region list received.");
+        }
+        public void OnCustomAuthenticationResponse(Dictionary<string, object> data)
+        {
+            Debug.Log("[PumpkinPanicCoop][PHOTON] Custom authentication response received.");
+        }
+        public void OnCustomAuthenticationFailed(string debugMessage)
+        {
+            LastError = debugMessage;
+            Debug.LogError("[PumpkinPanicCoop][PHOTON] Custom authentication failed: " + debugMessage);
+        }
         public void OnDisconnected(DisconnectCause cause)
         {
+            Debug.LogError("[PumpkinPanicCoop][PHOTON] Disconnected callback: " + cause +
+                "; state=" + PhotonNetwork.NetworkingClient.State);
             LastError = cause.ToString();
             if (PhotonNetwork.CurrentRoom != null) pendingRejoinRoomCode = PhotonNetwork.CurrentRoom.Name;
             else if (!string.IsNullOrEmpty(lastRoomCode)) pendingRejoinRoomCode = lastRoomCode;
