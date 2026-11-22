@@ -8,6 +8,19 @@ namespace PumpkinPanicCoop.Editor
 {
     public static class GeneratePhotonServerSettings
     {
+        public static void ValidateScripts()
+        {
+            CreateOrUpdate();
+            Debug.Log("[PumpkinPanicCoop] Fast validation completed: Unity loaded the project and compiled available scripts.");
+        }
+
+        public static void BuildWebGL()
+        {
+            CreateOrUpdate();
+            Debug.Log("[PumpkinPanicCoop] Starting WebGL build in the same Unity Editor process.");
+            Buildalon.Editor.BuildPipeline.UnityPlayerBuildTools.StartCommandLineBuild();
+        }
+
         public static void CreateOrUpdate()
         {
             string appId = Environment.GetEnvironmentVariable("PHOTON_APP_ID");
