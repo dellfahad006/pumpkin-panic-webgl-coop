@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using ExitGames.Client.Photon;
 using Photon.Pun;
 using Photon.Realtime;
@@ -36,6 +37,7 @@ namespace PumpkinPanicCoop.Runtime
         private bool reconnecting;
         private bool reconnectAndRejoinInFlight;
         private string lastLoggedState;
+        private float nextDiagnosticHeartbeat;
 
         private void Awake()
         {
@@ -75,6 +77,11 @@ namespace PumpkinPanicCoop.Runtime
                 PhotonNetwork.SendRate = 30;
                 PhotonNetwork.SerializationRate = 20;
                 PhotonNetwork.AddCallbackTarget(this);
+                string punAssembly = typeof(PhotonNetwork).Assembly.FullName;
+                string punVersion = ReadPunVersion();
+                WebGLForensicDiagnostics.Mark("PUN_RUNTIME_ASSEMBLY=" + punAssembly + "; PUN_VERSION=" + punVersion +
+                    "; APP_SETTINGS_PRESENT=" + (PhotonNetwork.PhotonServerSettings != null));
+                Debug.Log("[PumpkinPanicCoop][PHOTON] Runtime SDK identity: assembly=" + punAssembly + "; version=" + punVersion);
                 Debug.Log("[PumpkinPanicCoop][PHOTON] Callback target registered; state=" +
                     PhotonNetwork.NetworkingClient.State + ", connected=" + PhotonNetwork.IsConnected +
                     ", ready=" + PhotonNetwork.IsConnectedAndReady);
@@ -140,6 +147,20 @@ namespace PumpkinPanicCoop.Runtime
             }
         }
 
+        private static string ReadPunVersion()
+        {
+            try
+            {
+                Type type = typeof(PhotonNetwork);
+                FieldInfo field = type.GetField("PunVersion", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+                if (field != null) return Convert.ToString(field.GetValue(null));
+                PropertyInfo property = type.GetProperty("PunVersion", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+                if (property != null) return Convert.ToString(property.GetValue(null, null));
+                return "not-exposed-by-this-sdk";
+            }
+            catch (Exception exception) { return "version-read-failed:" + exception.GetType().Name; }
+        }
+
         private void Update()
         {
             string state = PhotonNetwork.NetworkingClient.State.ToString();
@@ -147,6 +168,17 @@ namespace PumpkinPanicCoop.Runtime
             {
                 lastLoggedState = state;
                 Debug.Log("[PumpkinPanicCoop][PHOTON] Client state changed: " + state);
+                WebGLForensicDiagnostics.Mark("PHOTON_STATE=" + state);
+            }
+            if (Time.unscaledTime >= nextDiagnosticHeartbeat)
+            {
+                nextDiagnosticHeartbeat = Time.unscaledTime + 5f;
+                WebGLForensicDiagnostics.Mark("PHOTON_HEARTBEAT state=" + state +
+                    "; connected=" + PhotonNetwork.IsConnected +
+                    "; ready=" + PhotonNetwork.IsConnectedAndReady +
+                    "; inRoom=" + PhotonNetwork.InRoom +
+                    "; frame=" + Time.frameCount +
+                    "; scene=" + UnityEngine.SceneManagement.SceneManager.GetActiveScene().name);
             }
         }
 
