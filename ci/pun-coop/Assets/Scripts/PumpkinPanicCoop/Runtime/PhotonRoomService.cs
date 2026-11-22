@@ -35,6 +35,7 @@ namespace PumpkinPanicCoop.Runtime
         private string lastRoomCode;
         private bool reconnecting;
         private bool reconnectAndRejoinInFlight;
+        private string lastLoggedState;
 
         private void Awake()
         {
@@ -74,8 +75,8 @@ namespace PumpkinPanicCoop.Runtime
                     PhotonNetwork.NetworkingClient.State + ", connected=" + PhotonNetwork.IsConnected +
                     ", ready=" + PhotonNetwork.IsConnectedAndReady);
 
-                Connect();
-                Debug.Log("[PumpkinPanicCoop][PHOTON] Awake completed; state=" +
+                Debug.Log("[PumpkinPanicCoop][PHOTON] Automatic startup connection deferred for isolation test; use the Connect button on the main menu.");
+                Debug.Log("[PumpkinPanicCoop][PHOTON] Awake completed without opening a WebSocket; state=" +
                     PhotonNetwork.NetworkingClient.State + ", connected=" + PhotonNetwork.IsConnected);
             }
             catch (Exception exception)
@@ -106,6 +107,18 @@ namespace PumpkinPanicCoop.Runtime
                     (Application.platform == RuntimePlatform.WebGLPlayer) + ", gameVersion=" +
                     PhotonNetwork.GameVersion + ", nickname=" + PhotonNetwork.NickName);
 
+                ServerSettings diagnosticSettings = PhotonNetwork.PhotonServerSettings;
+                if (diagnosticSettings != null)
+                {
+                    diagnosticSettings.PunLogging = PunLogLevel.Full;
+                    diagnosticSettings.EnableSupportLogger = true;
+                    Debug.Log("[PumpkinPanicCoop][PHOTON] Enabled full PUN logging and SupportLogger for this connection attempt.");
+                }
+                else
+                {
+                    Debug.LogError("[PumpkinPanicCoop][PHOTON] PhotonServerSettings is null before ConnectUsingSettings.");
+                }
+
                 bool started = PhotonNetwork.ConnectUsingSettings();
                 Debug.Log("[PumpkinPanicCoop][PHOTON] ConnectUsingSettings returned " + started +
                     "; state=" + PhotonNetwork.NetworkingClient.State + ", connected=" +
@@ -116,6 +129,16 @@ namespace PumpkinPanicCoop.Runtime
                 LastError = "ConnectUsingSettings exception: " + exception.Message;
                 Debug.LogError("[PumpkinPanicCoop][PHOTON][FATAL] ConnectUsingSettings threw: " + exception);
                 throw;
+            }
+        }
+
+        private void Update()
+        {
+            string state = PhotonNetwork.NetworkingClient.State.ToString();
+            if (state != lastLoggedState)
+            {
+                lastLoggedState = state;
+                Debug.Log("[PumpkinPanicCoop][PHOTON] Client state changed: " + state);
             }
         }
 
