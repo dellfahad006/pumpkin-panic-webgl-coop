@@ -49,6 +49,7 @@ namespace PumpkinPanicCoop.Editor
                 settings.AppSettings = new AppSettings();
             settings.AppSettings.AppIdRealtime = appId.Trim();
             settings.AppSettings.UseNameServer = true;
+            settings.AppSettings.Protocol = ExitGames.Client.Photon.ConnectionProtocol.WebSocketSecure;
             settings.PunLogging = PunLogLevel.Full;
             settings.EnableSupportLogger = true;
             EditorUtility.SetDirty(settings);

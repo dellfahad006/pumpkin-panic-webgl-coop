@@ -250,6 +250,7 @@ def main() -> int:
     editor_target = project / "Assets/Editor/GeneratePhotonServerSettings.cs"
     editor_target.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(editor_source, editor_target)
+    shutil.copy2(PORT_ROOT / "Assets/link.xml", project / "Assets/link.xml")
     log("PUN co-op installation complete")
     return 0
 
