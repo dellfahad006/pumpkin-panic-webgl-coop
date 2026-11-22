@@ -1,9 +1,0 @@
-services:
-  - type: web
-    name: pumpkin-panic-webgl-coop
-    runtime: node
-    rootDir: server
-    plan: starter
-    buildCommand: npm install
-    startCommand: npm start
-    healthCheckPath: /health

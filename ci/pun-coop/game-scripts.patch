@@ -1,0 +1,2046 @@
+--- a/Assets/Scripts/Assembly-CSharp/OpossumTake.cs
++++ b/Assets/Scripts/Assembly-CSharp/OpossumTake.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using UnityEngine;
+ using UnityEngine.InputSystem;
+ 
+@@ -51,6 +52,7 @@
+ 
+ 	private void OnTriggerEnter(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			onRange = true;
+@@ -64,6 +66,7 @@
+ 
+ 	private void OnTriggerExit(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			onRange = false;
+--- a/Assets/Scripts/Assembly-CSharp/PetFlyHouseCollider.cs
++++ b/Assets/Scripts/Assembly-CSharp/PetFlyHouseCollider.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using System.Collections;
+ using UnityEngine;
+ 
+@@ -22,12 +23,16 @@
+ 
+ 	private void OnTriggerEnter(Collider other)
+ 	{
++        if (other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
++
+ 		Vector3 targetPosition = posicionOriginal + new Vector3(moveX, moveY, moveZ);
+ 		StartCoroutine(MoveToPosition(flyPetPoint.transform, targetPosition, moveDuration));
+ 	}
+ 
+ 	private void OnTriggerExit(Collider other)
+ 	{
++        if (other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
++
+ 		StartCoroutine(MoveToPosition(flyPetPoint.transform, posicionOriginal, moveDuration));
+ 	}
+ 
+--- a/Assets/Scripts/Assembly-CSharp/UpzoneHouse.cs
++++ b/Assets/Scripts/Assembly-CSharp/UpzoneHouse.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using System.Collections;
+ using UnityEngine;
+ 
+@@ -31,6 +32,8 @@
+ 
+ 	private void OnTriggerEnter(Collider other)
+ 	{
++        if (other == null || other.GetComponentInParent<playerController>() == null) return;
++
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			cabinFrontAnim.SetBool("inside", value: true);
+@@ -45,6 +48,8 @@
+ 
+ 	private void OnTriggerExit(Collider other)
+ 	{
++        if (other == null || other.GetComponentInParent<playerController>() == null) return;
++
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			cabinFrontAnim.SetBool("inside", value: false);
+--- a/Assets/Scripts/Assembly-CSharp/albinoWendigoController.cs
++++ b/Assets/Scripts/Assembly-CSharp/albinoWendigoController.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using System.Collections;
+ using UnityEngine;
+ using UnityEngine.AI;
+@@ -97,6 +98,8 @@
+ 
+ 	private void Update()
+ 	{
++        if (!Plugin.BeforeDeerUpdate(this)) return;
++
+ 		timeToIdle -= Time.deltaTime;
+ 		if (timeToIdle <= 0f && !canKill)
+ 		{
+@@ -148,6 +151,8 @@
+ 
+ 	private void OnTriggerStay(Collider other)
+ 	{
++        if (!Plugin.BeforeDeerContact(this, other)) return;
++
+ 		if (!canKill && other.CompareTag("Player"))
+ 		{
+ 			StartCoroutine(transformWendigo());
+@@ -195,7 +200,13 @@
+ 	}
+ 
+ 	private IEnumerator backToDeer()
+-	{
++	
++    {
++        return Plugin.FinishDeerPursuit(this, backToDeerOriginal());
++    }
++
++    private IEnumerator backToDeerOriginal()
++    {
+ 		yield return new WaitForSeconds(6f);
+ 		StartCoroutine(deerAgain());
+ 		followPlayer = false;
+@@ -208,7 +219,9 @@
+ 		faceChanger.SetActive(value: false);
+ 		panicFace.SetActive(value: false);
+ 		megaPanicFace.SetActive(value: false);
+-	}
++	
++    }
++
+ 
+ 	private IEnumerator deerAgain()
+ 	{
+@@ -245,6 +258,8 @@
+ 
+ 	private void tryKill()
+ 	{
++        if (!Plugin.BeforeDeerKill(this)) return;
++
+ 		if (followPlayer)
+ 		{
+ 			animWendigo.SetBool("eat", value: true);
+--- a/Assets/Scripts/Assembly-CSharp/boatAxis.cs
++++ b/Assets/Scripts/Assembly-CSharp/boatAxis.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using UnityEngine;
+ 
+ public class boatAxis : MonoBehaviour
+@@ -40,6 +41,8 @@
+ 
+ 	private void OnTriggerEnter(Collider other)
+ 	{
++        if (other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
++
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			inBoat = true;
+@@ -52,6 +55,8 @@
+ 
+ 	private void OnTriggerExit(Collider other)
+ 	{
++        if (other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
++
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			inBoat = false;
+--- a/Assets/Scripts/Assembly-CSharp/candleMonster.cs
++++ b/Assets/Scripts/Assembly-CSharp/candleMonster.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using System.Collections;
+ using UnityEngine;
+ 
+@@ -56,6 +57,8 @@
+ 
+ 	private void Update()
+ 	{
++        if (!Plugin.BeforeCandleUpdate(this)) return;
++
+ 		if (insideHouse)
+ 		{
+ 			if (timeWorking)
+--- a/Assets/Scripts/Assembly-CSharp/challengesNightmare.cs
++++ b/Assets/Scripts/Assembly-CSharp/challengesNightmare.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using UnityEngine;
+ using UnityEngine.InputSystem;
+ 
+@@ -96,6 +97,7 @@
+ 
+ 	private void OnTriggerEnter(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			atRange = true;
+@@ -104,6 +106,7 @@
+ 
+ 	private void OnTriggerExit(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			atRange = false;
+--- a/Assets/Scripts/Assembly-CSharp/chopTree.cs
++++ b/Assets/Scripts/Assembly-CSharp/chopTree.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using System.Collections;
+ using Cinemachine;
+ using UnityEngine;
+@@ -92,6 +93,7 @@
+ 
+ 	private void OnTriggerEnter(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			onRange = true;
+@@ -104,6 +106,7 @@
+ 
+ 	private void OnTriggerExit(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			onRange = false;
+--- a/Assets/Scripts/Assembly-CSharp/closet.cs
++++ b/Assets/Scripts/Assembly-CSharp/closet.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using System.Collections;
+ using UnityEngine;
+ using UnityEngine.EventSystems;
+@@ -69,6 +70,7 @@
+ 
+ 	private void OnTriggerStay(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			atRange = true;
+@@ -78,6 +80,7 @@
+ 
+ 	private void OnTriggerExit(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			CloseCloset();
+--- a/Assets/Scripts/Assembly-CSharp/clown1.cs
++++ b/Assets/Scripts/Assembly-CSharp/clown1.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using System.Collections;
+ using UnityEngine;
+ using UnityEngine.InputSystem;
+@@ -47,6 +48,8 @@
+ 
+ 	private void Update()
+ 	{
++        if (!Plugin.BeforeClownUpdate(this)) return;
++
+ 		if (timerRunning)
+ 		{
+ 			timer -= Time.deltaTime;
+@@ -72,7 +75,7 @@
+ 		{
+ 			balloonOutline.SetActive(value: false);
+ 		}
+-		if ((atClownRange && Input.GetButton("Interact")) || (Gamepad.current != null && atClownRange && Gamepad.current.buttonSouth.isPressed))
++		if ((atClownRange && Plugin.ClownKeyboard("Interact")) || (Gamepad.current != null && atClownRange && Plugin.ClownGamepad(Gamepad.current.buttonSouth)))
+ 		{
+ 			timerRunning = false;
+ 			base.gameObject.GetComponent<BoxCollider>().enabled = false;
+@@ -95,6 +98,8 @@
+ 
+ 	private void OnTriggerStay(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
++
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			atClownRange = true;
+@@ -103,6 +108,8 @@
+ 
+ 	private void OnTriggerExit(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
++
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			atClownRange = false;
+--- a/Assets/Scripts/Assembly-CSharp/clown2.cs
++++ b/Assets/Scripts/Assembly-CSharp/clown2.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using System.Collections;
+ using UnityEngine;
+ using UnityEngine.AI;
+@@ -80,8 +81,11 @@
+ 
+ 	private void OnEnable()
+ 	{
++
+ 		clownsHintNotes.enabled = true;
+-	}
++	
++        Plugin.ResetBlueClownSpawn(this);
++}
+ 
+ 	private void Start()
+ 	{
+@@ -93,6 +97,8 @@
+ 
+ 	private void Update()
+ 	{
++        if (!Plugin.BeforeClownUpdate(this)) return;
++
+ 		if (timerRunning)
+ 		{
+ 			timer -= Time.deltaTime;
+@@ -134,7 +140,7 @@
+ 			outline.SetActive(value: false);
+ 			needs.SetBool("popUp", value: false);
+ 		}
+-		if (((atClownieRange && Input.GetButton("Interact")) || (Gamepad.current != null && atClownieRange && Gamepad.current.buttonSouth.isPressed)) && !killerMode && clownController.GetComponent<clownController>().haveBalloon)
++		if (((atClownieRange && Plugin.ClownKeyboard("Interact")) || (Gamepad.current != null && atClownieRange && Plugin.ClownGamepad(Gamepad.current.buttonSouth))) && !killerMode && clownController.GetComponent<clownController>().haveBalloon)
+ 		{
+ 			atClownieRange = false;
+ 			timerRunning = false;
+@@ -161,6 +167,8 @@
+ 
+ 	private void OnTriggerStay(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
++
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			atClownieRange = true;
+@@ -169,6 +177,8 @@
+ 
+ 	private void OnTriggerExit(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
++
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			atClownieRange = false;
+--- a/Assets/Scripts/Assembly-CSharp/clownController.cs
++++ b/Assets/Scripts/Assembly-CSharp/clownController.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using System.Collections;
+ using UnityEngine;
+ 
+@@ -39,6 +40,8 @@
+ 
+ 	private IEnumerator callClown()
+ 	{
++        if (Plugin.IsGuest) yield break;
++
+ 		yield return new WaitForSeconds(Random.Range(50, 90));
+ 		if (!loop1.GetComponent<loop1>().ghoulAttacking)
+ 		{
+@@ -65,6 +68,8 @@
+ 
+ 	private IEnumerator callClownie()
+ 	{
++        if (Plugin.IsGuest) yield break;
++
+ 		yield return new WaitForSeconds(Random.Range(60, 100));
+ 		if (!loop1.GetComponent<loop1>().ghoulAttacking)
+ 		{
+@@ -89,6 +94,8 @@
+ 
+ 	private IEnumerator clownDelay()
+ 	{
++        if (Plugin.IsGuest) yield break;
++
+ 		yield return new WaitForSeconds(25f);
+ 		anim.speed = 0f;
+ 		clownOnMap = true;
+@@ -102,6 +109,8 @@
+ 
+ 	private IEnumerator clownieDelay()
+ 	{
++        if (Plugin.IsGuest) yield break;
++
+ 		yield return new WaitForSeconds(25f);
+ 		anim.speed = 0f;
+ 		clownOnMap = true;
+--- a/Assets/Scripts/Assembly-CSharp/crowTake.cs
++++ b/Assets/Scripts/Assembly-CSharp/crowTake.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using UnityEngine;
+ using UnityEngine.InputSystem;
+ 
+@@ -48,6 +49,7 @@
+ 
+ 	private void OnTriggerEnter(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
+ 		if (!other.CompareTag("Player"))
+ 		{
+ 			return;
+@@ -66,6 +68,7 @@
+ 
+ 	private void OnTriggerExit(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			onRange = false;
+--- a/Assets/Scripts/Assembly-CSharp/endGame.cs
++++ b/Assets/Scripts/Assembly-CSharp/endGame.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using System.Collections;
+ using UnityEngine;
+ using UnityEngine.SceneManagement;
+@@ -39,6 +40,8 @@
+ 
+ 	private void OnTriggerEnter(Collider other)
+ 	{
++        if (!Plugin.BeforeBoatExit(this, other)) return;
++
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			door.Play("boatCloseDoor");
+--- a/Assets/Scripts/Assembly-CSharp/enemyController.cs
++++ b/Assets/Scripts/Assembly-CSharp/enemyController.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using System.Collections;
+ using UnityEngine;
+ using UnityEngine.AI;
+@@ -64,6 +65,7 @@
+ 
+ 	private void OnEnable()
+ 	{
++
+ 		agent = GetComponent<NavMeshAgent>();
+ 		if (isNightmare)
+ 		{
+@@ -74,10 +76,14 @@
+ 				agent.speed += 0.02f;
+ 			}
+ 		}
+-	}
++	
++        Plugin.InvalidateEnemySnapshotSources();
++}
+ 
+ 	private void Update()
+ 	{
++        if (!Plugin.BeforeEnemyUpdate(this)) return;
++
+ 		if (followPlayer && !goHome)
+ 		{
+ 			agent.SetDestination(player.position);
+@@ -117,6 +123,18 @@
+ 
+ 	private void OnTriggerEnter(Collider other)
+ 	{
++        if (Plugin.InCoop)
++        {
++            if (Plugin.IsGuest || other == null) return;
++            RemotePlayerProxy remote = other.GetComponentInParent<RemotePlayerProxy>();
++            if (remote != null) { if (!remote.IsAlive || playerController != remote.gameObject) return; }
++            else
++            {
++                playerController local = other.GetComponentInParent<playerController>();
++                if (local == null || Plugin.IsDead(local) || playerController != local.gameObject) return;
++            }
++        }
++
+ 		if (other.gameObject.CompareTag("Player") && !soundedAlready)
+ 		{
+ 			soundedAlready = true;
+@@ -127,6 +145,8 @@
+ 
+ 	private IEnumerator moveNow()
+ 	{
++        if (Plugin.ContinueChaseAfterKill(this)) yield break;
++
+ 		yield return new WaitForSeconds(2.75f);
+ 		followPlayer = false;
+ 		goHome = true;
+@@ -153,6 +173,8 @@
+ 
+ 	private void tryKill()
+ 	{
++        if (!Plugin.BeforeEnemyAttack(this)) return;
++
+ 		if (followPlayer)
+ 		{
+ 			body.SetBool("Move", value: false);
+@@ -177,5 +199,7 @@
+ 			soundedAlready = false;
+ 			attackFailSource.Play();
+ 		}
+-	}
++	
++        Plugin.AfterEnemyAttack(this);
+ }
++}
+--- a/Assets/Scripts/Assembly-CSharp/engine.cs
++++ b/Assets/Scripts/Assembly-CSharp/engine.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using System.Collections;
+ using UnityEngine;
+ using UnityEngine.InputSystem;
+@@ -104,13 +105,15 @@
+ 
+ 	private void OnTriggerStay(Collider other)
+ 	{
++        if (!Plugin.BeforeBoatRepair(this, other)) return;
++
+ 		if (other.CompareTag("Player") && canRepair)
+ 		{
+ 			onRange = true;
+ 			base.gameObject.GetComponent<Outline>().enabled = true;
+ 			holdText.SetActive(value: true);
+ 			needs.SetBool("popUp", value: true);
+-			if ((Input.GetButton("Interact") || (Gamepad.current != null && Gamepad.current.buttonSouth.isPressed)) && shopManager.GetComponent<shopManager>().numOfMotor >= 1)
++			if ((Plugin.RepairHeld("Interact") || (Gamepad.current != null && Gamepad.current.buttonSouth.isPressed)) && shopManager.GetComponent<shopManager>().numOfMotor >= 1)
+ 			{
+ 				repairing = true;
+ 				needs.SetBool("popUp", value: false);
+@@ -123,7 +126,7 @@
+ 					Gamepad.current.SetMotorSpeeds(leftMotorStrengthSoft, rightMotorStrengthSoft);
+ 				}
+ 			}
+-			if (Input.GetButtonUp("Interact") || (Gamepad.current != null && Gamepad.current.buttonSouth.wasReleasedThisFrame))
++			if (Plugin.RepairReleased("Interact") || (Gamepad.current != null && Plugin.RepairPadReleased(Gamepad.current.buttonSouth)))
+ 			{
+ 				repairing = false;
+ 				base.gameObject.GetComponent<Outline>().enabled = false;
+@@ -136,7 +139,7 @@
+ 				StartCoroutine(repairCooldown());
+ 				StartCoroutine(cancelRepair());
+ 			}
+-			if (repairing && characterController.velocity.magnitude > 0f)
++			if (repairing && Plugin.RepairVelocity(characterController).magnitude > 0f)
+ 			{
+ 				repairing = false;
+ 				base.gameObject.GetComponent<Outline>().enabled = false;
+@@ -149,7 +152,7 @@
+ 				StartCoroutine(repairCooldown());
+ 				StartCoroutine(cancelRepair());
+ 			}
+-			if ((Input.GetButton("Interact") || (Gamepad.current != null && Gamepad.current.buttonSouth.isPressed)) && shopManager.GetComponent<shopManager>().numOfMotor < 1 && canRepair)
++			if ((Plugin.RepairHeld("Interact") || (Gamepad.current != null && Gamepad.current.buttonSouth.isPressed)) && shopManager.GetComponent<shopManager>().numOfMotor < 1 && canRepair)
+ 			{
+ 				Debug.Log("You need a engine piece");
+ 				myAudioSource.Play();
+@@ -250,6 +253,8 @@
+ 
+ 	private void OnTriggerExit(Collider other)
+ 	{
++        if (!Plugin.BeforeBoatRepairExit(other)) return;
++
+ 		onRange = false;
+ 		if (other.CompareTag("Player") && !repairing)
+ 		{
+--- a/Assets/Scripts/Assembly-CSharp/faceChanger.cs
++++ b/Assets/Scripts/Assembly-CSharp/faceChanger.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using UnityEngine;
+ 
+ public class faceChanger : MonoBehaviour
+@@ -19,6 +20,13 @@
+ 
+ 	private void OnTriggerStay(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null)
++        {
++            playerController player = other.GetComponentInParent<playerController>();
++            if (player != null && Plugin.IsDead(player)) return;
++        }
++
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
+ 		if (!other.CompareTag("Player"))
+ 		{
+ 			return;
+@@ -43,6 +51,7 @@
+ 
+ 	private void OnTriggerExit(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			megaPanicFace.SetActive(value: false);
+--- a/Assets/Scripts/Assembly-CSharp/finalCinematicEvents.cs
++++ b/Assets/Scripts/Assembly-CSharp/finalCinematicEvents.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using System.Collections;
+ using TMPro;
+ using UnityEngine;
+@@ -37,7 +38,9 @@
+ 			youSurvived.SetActive(value: false);
+ 			youSurvivedNightmare.SetActive(value: true);
+ 		}
+-	}
++	
++        Plugin.TickFromGame();
++}
+ 
+ 	private IEnumerator survivedPanelOn()
+ 	{
+@@ -48,6 +51,8 @@
+ 
+ 	public void MainMenu()
+ 	{
++        if (!Plugin.BeforeVictoryMenu()) return;
++
+ 		survivedAnim.SetTrigger("menuOut");
+ 		blackScreen.SetActive(value: true);
+ 		StartCoroutine(goMenu());
+--- a/Assets/Scripts/Assembly-CSharp/firstSeed.cs
++++ b/Assets/Scripts/Assembly-CSharp/firstSeed.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using System.Collections;
+ using UnityEngine;
+ using UnityEngine.InputSystem;
+@@ -24,6 +25,9 @@
+ 
+ 	private void OnTriggerStay(Collider other)
+ 	{
++        if (Plugin.LocalPauseMenuOpen || Plugin.MatchSimulationPaused) return;
++
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			if (Input.GetButton("Interact") || (Gamepad.current != null && Gamepad.current.buttonSouth.isPressed))
+@@ -45,6 +49,7 @@
+ 
+ 	private void OnTriggerExit(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
+ 		outlineObj.GetComponent<Outline>().enabled = false;
+ 	}
+ 
+--- a/Assets/Scripts/Assembly-CSharp/fishingSite.cs
++++ b/Assets/Scripts/Assembly-CSharp/fishingSite.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using System.Collections;
+ using UnityEngine;
+ using UnityEngine.InputSystem;
+@@ -120,6 +121,7 @@
+ 
+ 	private void OnTriggerStay(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
+ 		if (faseCompra && ((other.CompareTag("Player") && Input.GetButton("Interact")) || (Gamepad.current != null && other.CompareTag("Player") && Gamepad.current.buttonSouth.isPressed)))
+ 		{
+ 			if (moneyCount.GetComponent<moneyCount>().numStick >= 6 && moneyCount.GetComponent<moneyCount>().numFiber >= 6)
+@@ -151,6 +153,7 @@
+ 
+ 	private void OnTriggerEnter(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
+ 		if ((faseCompra || faseWaiting || faseCatch || faseTake) && other.CompareTag("Player"))
+ 		{
+ 			onRange = true;
+@@ -162,6 +165,7 @@
+ 
+ 	private void OnTriggerExit(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
+ 		if ((faseCompra || faseWaiting || faseCatch || faseTake) && other.CompareTag("Player"))
+ 		{
+ 			onRange = false;
+--- a/Assets/Scripts/Assembly-CSharp/gameOverActiveButtons.cs
++++ b/Assets/Scripts/Assembly-CSharp/gameOverActiveButtons.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using System.Collections;
+ using UnityEngine;
+ using UnityEngine.EventSystems;
+@@ -22,6 +23,20 @@
+ 
+ 	private IEnumerator activeButtons()
+ 	{
++		return ApplyGuestButtonState(activeButtonsOriginal());
++	}
++
++	private IEnumerator ApplyGuestButtonState(IEnumerator original)
++	{
++		while (original.MoveNext()) yield return original.Current;
++		if (Plugin.IsGuest)
++		{
++			retry.interactable = false;
++			if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(menu.gameObject);
++		}
++	}
++
++	private IEnumerator activeButtonsOriginal(){
+ 		yield return new WaitForSeconds(time);
+ 		retry.interactable = true;
+ 		menu.interactable = true;
+--- a/Assets/Scripts/Assembly-CSharp/getWater.cs
++++ b/Assets/Scripts/Assembly-CSharp/getWater.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using System.Collections;
+ using UnityEngine;
+ using UnityEngine.InputSystem;
+@@ -25,6 +26,9 @@
+ 
+ 	private void OnTriggerStay(Collider other)
+ 	{
++        if (Plugin.LocalPauseMenuOpen || Plugin.MatchSimulationPaused) return;
++
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
+ 		if ((double)gameManager.GetComponent<moneyCount>().water <= (double)gameManager.GetComponent<moneyCount>().maxWater - 0.015)
+ 		{
+ 			if ((other.CompareTag("Player") && Input.GetButton("Interact")) || (Gamepad.current != null && other.CompareTag("Player") && Gamepad.current.buttonSouth.isPressed))
+@@ -56,6 +60,7 @@
+ 
+ 	private void OnTriggerExit(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			handle.SetBool("spin", value: false);
+--- a/Assets/Scripts/Assembly-CSharp/houseLevel2.cs
++++ b/Assets/Scripts/Assembly-CSharp/houseLevel2.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using System.Collections;
+ using UnityEngine;
+ 
+@@ -31,6 +32,8 @@
+ 
+ 	private void OnTriggerEnter(Collider other)
+ 	{
++        if (other == null || other.GetComponentInParent<playerController>() == null) return;
++
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			cabinFrontAnim.SetBool("inside", value: true);
+@@ -44,6 +47,8 @@
+ 
+ 	private void OnTriggerExit(Collider other)
+ 	{
++        if (other == null || other.GetComponentInParent<playerController>() == null) return;
++
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			fireplaceAnim.SetBool("Inside", value: false);
+@@ -64,6 +69,8 @@
+ 
+ 	private void OnTriggerStay(Collider other)
+ 	{
++        if (other == null || other.GetComponentInParent<playerController>() == null) return;
++
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			fireplaceAnim.SetBool("Inside", value: true);
+--- a/Assets/Scripts/Assembly-CSharp/itemGen.cs
++++ b/Assets/Scripts/Assembly-CSharp/itemGen.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using System.Collections;
+ using UnityEngine;
+ using UnityEngine.InputSystem;
+@@ -168,7 +169,7 @@
+ 		irisCoinItem.SetActive(value: true);
+ 		irisCrow.SetActive(value: false);
+ 		base.gameObject.GetComponent<BoxCollider>().enabled = true;
+-		if (isNightmare)
++		if (isNightmare && !Plugin.InCoop)
+ 		{
+ 			itemGenCoinController.currentTime = itemGenCoinController.timeToSpawnCoin;
+ 		}
+@@ -176,6 +177,7 @@
+ 
+ 	private void OnTriggerStay(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
+ 		if ((!other.CompareTag("Player") || !Input.GetButton("Interact")) && (Gamepad.current == null || !other.CompareTag("Player") || !Gamepad.current.buttonSouth.isPressed))
+ 		{
+ 			return;
+@@ -222,6 +224,7 @@
+ 
+ 	private void OnTriggerEnter(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			outlineStick.SetActive(value: true);
+@@ -232,6 +235,7 @@
+ 
+ 	private void OnTriggerExit(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			outlineStick.SetActive(value: false);
+--- a/Assets/Scripts/Assembly-CSharp/itemGenCoin.cs
++++ b/Assets/Scripts/Assembly-CSharp/itemGenCoin.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using System.Collections;
+ using UnityEngine;
+ using UnityEngine.InputSystem;
+@@ -45,6 +46,7 @@
+ 
+ 	private void OnTriggerStay(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
+ 		if ((other.CompareTag("Player") && Input.GetButton("Interact")) || (Gamepad.current != null && other.CompareTag("Player") && Gamepad.current.buttonSouth.isPressed))
+ 		{
+ 			base.gameObject.GetComponent<BoxCollider>().enabled = false;
+@@ -61,6 +63,7 @@
+ 
+ 	private void OnTriggerEnter(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			outlineIrisCoin.SetActive(value: true);
+@@ -69,6 +72,7 @@
+ 
+ 	private void OnTriggerExit(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			outlineIrisCoin.SetActive(value: false);
+--- a/Assets/Scripts/Assembly-CSharp/lantern.cs
++++ b/Assets/Scripts/Assembly-CSharp/lantern.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using System.Collections;
+ using UnityEngine;
+ using UnityEngine.InputSystem;
+@@ -52,7 +53,7 @@
+ 
+ 	private void Update()
+ 	{
+-		if ((Input.GetButtonUp("Lantern") && !deadNow) || (Gamepad.current != null && Gamepad.current.buttonNorth.wasReleasedThisFrame && !deadNow))
++		if (((!Plugin.LocalPauseMenuOpen && Input.GetButtonUp("Lantern")) && !deadNow) || (Gamepad.current != null && (!Plugin.LocalPauseMenuOpen && Gamepad.current.buttonNorth.wasReleasedThisFrame) && !deadNow))
+ 		{
+ 			lanternUnequipped = !lanternUnequipped;
+ 			if (lanternUnequipped)
+--- a/Assets/Scripts/Assembly-CSharp/mainMenu.cs
++++ b/Assets/Scripts/Assembly-CSharp/mainMenu.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using System.Collections;
+ using UnityEngine;
+ using UnityEngine.EventSystems;
+@@ -63,7 +64,9 @@
+ 		{
+ 			blackScreen.canvasRenderer.SetAlpha(0f);
+ 		}
+-	}
++	
++        Plugin.DumpMainMenuUi(this);
++}
+ 
+ 	private void Update()
+ 	{
+@@ -73,10 +76,14 @@
+ 			StartCoroutine(nextScene());
+ 			soundFadeOut = false;
+ 		}
+-	}
++	
++        Plugin.TickFromGame();
++}
+ 
+ 	public void PlayMenu()
+ 	{
++        if (!Plugin.CanOpenPlayMenu()) return;
++
+ 		levelPanel.SetBool("openMenu", value: true);
+ 		optionsPanel.SetBool("openMenu", value: false);
+ 		optionsButton.PlayOneShot(clickSFX, 0.7f);
+@@ -96,6 +103,9 @@
+ 
+ 	public void PlayGameNormal()
+ 	{
++        if (Plugin.InCoop && Plugin.IsGuest) return;
++        Plugin.HostSelectedDifficulty(nightmare: false);
++
+ 		goNightmare = false;
+ 		playGame.PlayOneShot(playSFX, 0.7f);
+ 		mainMenuPanel.Play("mainMenuEnterGame");
+@@ -108,6 +118,9 @@
+ 
+ 	public void PlayGameNightmare()
+ 	{
++        if (Plugin.InCoop && Plugin.IsGuest) return;
++        Plugin.HostSelectedDifficulty(nightmare: true);
++
+ 		goNightmare = true;
+ 		playGame.PlayOneShot(playSFX, 0.7f);
+ 		mainMenuPanel.Play("mainMenuEnterGame");
+@@ -159,6 +172,8 @@
+ 
+ 	public void MainMenu()
+ 	{
++        if (!Plugin.BeforeMatchMenuReturn()) return;
++
+ 		pauseGame.gameResume();
+ 		if (!goNightmare)
+ 		{
+@@ -172,6 +187,8 @@
+ 
+ 	public void RetryGame()
+ 	{
++        if (!Plugin.BeforeRetry()) return;
++
+ 		retryButtonAudio.PlayOneShot(clickSFX, 0.6f);
+ 		SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+ 	}
+--- a/Assets/Scripts/Assembly-CSharp/monsterNotes.cs
++++ b/Assets/Scripts/Assembly-CSharp/monsterNotes.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using System.Collections;
+ using UnityEngine;
+ using UnityEngine.EventSystems;
+@@ -61,6 +62,7 @@
+ 
+ 	private void OnTriggerEnter(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			atRange = true;
+@@ -70,6 +72,7 @@
+ 
+ 	private void OnTriggerExit(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			atRange = false;
+--- a/Assets/Scripts/Assembly-CSharp/openDoor.cs
++++ b/Assets/Scripts/Assembly-CSharp/openDoor.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using System.Collections;
+ using UnityEngine;
+ using UnityEngine.AI;
+@@ -45,7 +46,11 @@
+ 
+ 	private void OnTriggerStay(Collider other)
+ 	{
+-		if (other.CompareTag("Player") && ((Input.GetButton("Interact") && canInteract) || (Gamepad.current != null && Gamepad.current.buttonSouth.isPressed && canInteract)))
++        bool runOriginal = Plugin.BeforeGateStay(this, other);
++        try
++        {
++            if (!runOriginal) return;
++		if (other.CompareTag("Player") && ((Plugin.GateInput("Interact") && canInteract) || (Gamepad.current != null && Gamepad.current.buttonSouth.isPressed && canInteract)))
+ 		{
+ 			if (!haveKey)
+ 			{
+@@ -75,7 +80,13 @@
+ 			StartCoroutine(explotionParticle());
+ 			StartCoroutine(borraOutline());
+ 		}
+-	}
++	
++        }
++        finally
++        {
++            Plugin.AfterGateStay(this);
++        }
++    }
+ 
+ 	private IEnumerator startCooldown()
+ 	{
+@@ -117,6 +128,8 @@
+ 
+ 	private void OnTriggerEnter(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
++
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			outlineDoor.GetComponent<Outline>().enabled = true;
+@@ -126,6 +139,8 @@
+ 
+ 	private void OnTriggerExit(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
++
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			outlineDoor.GetComponent<Outline>().enabled = false;
+--- a/Assets/Scripts/Assembly-CSharp/pauseGame.cs
++++ b/Assets/Scripts/Assembly-CSharp/pauseGame.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using System.Collections;
+ using UnityEngine;
+ using UnityEngine.EventSystems;
+@@ -53,7 +54,7 @@
+ 
+ 	private void Update()
+ 	{
+-		if ((Input.GetButtonDown("Start") || (Gamepad.current != null && Gamepad.current.startButton.wasPressedThisFrame)) && !shopIsOpen && !closet.GetComponent<closet>().closetOpen && !recycler.GetComponent<recycler>().open && !playerController.GetComponent<playerController>().isDead && !playerController.GetComponent<playerController>().isDeadInstantly && canPause)
++		if ((Input.GetButtonDown("Start") || (Gamepad.current != null && Gamepad.current.startButton.wasPressedThisFrame)) && !shopIsOpen && !closet.GetComponent<closet>().closetOpen && !recycler.GetComponent<recycler>().open && (!Plugin.InCoop || !playerController.GetComponent<playerController>().isDead) && (!Plugin.InCoop || !playerController.GetComponent<playerController>().isDeadInstantly) && canPause)
+ 		{
+ 			if (!isPaused)
+ 			{
+@@ -72,7 +73,10 @@
+ 		{
+ 			StartCoroutine(shopIsOpenCD());
+ 		}
+-	}
++	
++        Plugin.TrackPauseMenu(this);
++        Plugin.TickFromGame();
++}
+ 
+ 	public void gamePause()
+ 	{
+@@ -89,7 +93,9 @@
+ 		{
+ 			Gamepad.current.SetMotorSpeeds(0f, 0f);
+ 		}
+-	}
++	
++        Plugin.TrackPauseMenu(this);
++}
+ 
+ 	public void gameResume()
+ 	{
+@@ -101,7 +107,9 @@
+ 		optionsMenu.Play("OptionsWaiting");
+ 		isPaused = false;
+ 		pauseMenu.SetActive(value: false);
+-	}
++	
++        Plugin.TrackPauseMenu(this);
++}
+ 
+ 	private IEnumerator shopIsOpenCD()
+ 	{
+--- a/Assets/Scripts/Assembly-CSharp/petDoorBlocker.cs
++++ b/Assets/Scripts/Assembly-CSharp/petDoorBlocker.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using UnityEngine;
+ 
+ public class petDoorBlocker : MonoBehaviour
+@@ -12,6 +13,8 @@
+ 
+ 	private void OnTriggerEnter(Collider other)
+ 	{
++        if (other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
++
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			doorBlocker.SetActive(value: false);
+@@ -23,6 +26,8 @@
+ 
+ 	private void OnTriggerExit(Collider other)
+ 	{
++        if (other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
++
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			doorBlocker.SetActive(value: true);
+--- a/Assets/Scripts/Assembly-CSharp/petHut.cs
++++ b/Assets/Scripts/Assembly-CSharp/petHut.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using System.Collections;
+ using UnityEngine;
+ using UnityEngine.EventSystems;
+@@ -71,6 +72,7 @@
+ 
+ 	private void OnTriggerEnter(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			atRange = true;
+@@ -96,6 +98,7 @@
+ 
+ 	private void OnTriggerExit(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			atRange = false;
+--- a/Assets/Scripts/Assembly-CSharp/plantCrop.cs
++++ b/Assets/Scripts/Assembly-CSharp/plantCrop.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using System.Collections;
+ using UnityEngine;
+ using UnityEngine.InputSystem;
+@@ -80,6 +81,8 @@
+ 
+ 	private void OnTriggerEnter(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
++
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			squareOutline.SetActive(value: true);
+@@ -96,6 +99,11 @@
+ 
+ 	private void OnTriggerStay(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
++        if (Plugin.LocalPauseMenuOpen) return;
++        Plugin.CropTileState __state = Plugin.InCoop ? Plugin.CaptureCropInteraction(this) : null;
++        try
++        {
+ 		if (gameManager.GetComponent<moneyCount>().numSeeds1 > 0 && cropable && ((other.CompareTag("Player") && Input.GetButton("Plant")) || (Gamepad.current != null && other.CompareTag("Player") && Gamepad.current.buttonWest.isPressed)))
+ 		{
+ 			gameManager.GetComponent<moneyCount>().numSeeds1--;
+@@ -209,7 +217,13 @@
+ 			cropable = true;
+ 			RandNum = 0f;
+ 		}
+-	}
++	
++        }
++        finally
++        {
++            Plugin.OnCropInteraction(this, __state);
++        }
++        }
+ 
+ 	private void getDouble()
+ 	{
+--- a/Assets/Scripts/Assembly-CSharp/plantCrop1_lvl2.cs
++++ b/Assets/Scripts/Assembly-CSharp/plantCrop1_lvl2.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using System.Collections;
+ using UnityEngine;
+ using UnityEngine.InputSystem;
+@@ -76,6 +77,11 @@
+ 
+ 	private void OnTriggerStay(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
++        if (Plugin.LocalPauseMenuOpen) return;
++        Plugin.CropTileState __state = Plugin.InCoop ? Plugin.CaptureCropInteraction(this) : null;
++        try
++        {
+ 		if (gameManager.GetComponent<GameManager2>().numSeeds1 > 0 && cropable && ((other.CompareTag("Player") && Input.GetButton("Plant")) || (Gamepad.current != null && other.CompareTag("Player") && Gamepad.current.buttonWest.isPressed)))
+ 		{
+ 			gameManager.GetComponent<GameManager2>().numSeeds1--;
+@@ -170,5 +176,11 @@
+ 			yield return new WaitForSeconds(0.75f);
+ 			cropable = true;
+ 		}
+-	}
++	
++        }
++        finally
++        {
++            Plugin.OnCropInteraction(this, __state);
++        }
++        }
+ }
+--- a/Assets/Scripts/Assembly-CSharp/plantCrop2.cs
++++ b/Assets/Scripts/Assembly-CSharp/plantCrop2.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using System.Collections;
+ using UnityEngine;
+ using UnityEngine.InputSystem;
+@@ -74,6 +75,8 @@
+ 
+ 	private void OnTriggerEnter(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
++
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			squareOutline.SetActive(value: true);
+@@ -90,6 +93,11 @@
+ 
+ 	private void OnTriggerStay(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
++        if (Plugin.LocalPauseMenuOpen) return;
++        Plugin.CropTileState __state = Plugin.InCoop ? Plugin.CaptureCropInteraction(this) : null;
++        try
++        {
+ 		if (gameManager.GetComponent<moneyCount>().numSeeds2 > 0 && cropable && ((other.CompareTag("Player") && Input.GetButton("Plant")) || (Gamepad.current != null && other.CompareTag("Player") && Gamepad.current.buttonWest.isPressed)))
+ 		{
+ 			gameManager.GetComponent<moneyCount>().numSeeds2--;
+@@ -199,5 +207,11 @@
+ 			yield return new WaitForSeconds(0.75f);
+ 			cropable = true;
+ 		}
+-	}
++	
++        }
++        finally
++        {
++            Plugin.OnCropInteraction(this, __state);
++        }
++        }
+ }
+--- a/Assets/Scripts/Assembly-CSharp/plantCrop3.cs
++++ b/Assets/Scripts/Assembly-CSharp/plantCrop3.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using System.Collections;
+ using UnityEngine;
+ using UnityEngine.InputSystem;
+@@ -74,6 +75,8 @@
+ 
+ 	private void OnTriggerEnter(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
++
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			squareOutline.SetActive(value: true);
+@@ -90,6 +93,11 @@
+ 
+ 	private void OnTriggerStay(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
++        if (Plugin.LocalPauseMenuOpen) return;
++        Plugin.CropTileState __state = Plugin.InCoop ? Plugin.CaptureCropInteraction(this) : null;
++        try
++        {
+ 		if (gameManager.GetComponent<moneyCount>().numSeeds3 > 0 && cropable && ((other.CompareTag("Player") && Input.GetButton("Plant")) || (Gamepad.current != null && other.CompareTag("Player") && Gamepad.current.buttonWest.isPressed)))
+ 		{
+ 			gameManager.GetComponent<moneyCount>().numSeeds3--;
+@@ -199,5 +207,11 @@
+ 			yield return new WaitForSeconds(0.75f);
+ 			cropable = true;
+ 		}
+-	}
++	
++        }
++        finally
++        {
++            Plugin.OnCropInteraction(this, __state);
++        }
++        }
+ }
+--- a/Assets/Scripts/Assembly-CSharp/plantCrop4.cs
++++ b/Assets/Scripts/Assembly-CSharp/plantCrop4.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using System.Collections;
+ using UnityEngine;
+ using UnityEngine.InputSystem;
+@@ -70,6 +71,8 @@
+ 
+ 	private void OnTriggerEnter(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
++
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			squareOutline.SetActive(value: true);
+@@ -86,6 +89,11 @@
+ 
+ 	private void OnTriggerStay(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
++        if (Plugin.LocalPauseMenuOpen) return;
++        Plugin.CropTileState __state = Plugin.InCoop ? Plugin.CaptureCropInteraction(this) : null;
++        try
++        {
+ 		if (gameManager.GetComponent<moneyCount>().numSeeds4 > 0 && cropable && ((other.CompareTag("Player") && Input.GetButton("Plant")) || (Gamepad.current != null && other.CompareTag("Player") && Gamepad.current.buttonWest.isPressed)))
+ 		{
+ 			gameManager.GetComponent<moneyCount>().numSeeds4--;
+@@ -174,5 +182,11 @@
+ 			yield return new WaitForSeconds(0.75f);
+ 			cropable = true;
+ 		}
+-	}
++	
++        }
++        finally
++        {
++            Plugin.OnCropInteraction(this, __state);
++        }
++        }
+ }
+--- a/Assets/Scripts/Assembly-CSharp/plantCrop5.cs
++++ b/Assets/Scripts/Assembly-CSharp/plantCrop5.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using System.Collections;
+ using UnityEngine;
+ using UnityEngine.InputSystem;
+@@ -96,6 +97,8 @@
+ 
+ 	private void OnTriggerEnter(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
++
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			squareOutline.SetActive(value: true);
+@@ -112,6 +115,11 @@
+ 
+ 	private void OnTriggerStay(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
++        if (Plugin.LocalPauseMenuOpen) return;
++        Plugin.CropTileState __state = Plugin.InCoop ? Plugin.CaptureCropInteraction(this) : null;
++        try
++        {
+ 		if (gameManager.GetComponent<moneyCount>().numSeeds5 > 0 && cropable && ((other.CompareTag("Player") && Input.GetButton("Plant")) || (Gamepad.current != null && other.CompareTag("Player") && Gamepad.current.buttonWest.isPressed)))
+ 		{
+ 			gameManager.GetComponent<moneyCount>().numSeeds5--;
+@@ -340,5 +348,11 @@
+ 			yield return new WaitForSeconds(0.05f);
+ 			wetable6 = true;
+ 		}
+-	}
++	
++        }
++        finally
++        {
++            Plugin.OnCropInteraction(this, __state);
++        }
++        }
+ }
+--- a/Assets/Scripts/Assembly-CSharp/playerController.cs
++++ b/Assets/Scripts/Assembly-CSharp/playerController.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using System.Collections;
+ using Cinemachine;
+ using TMPro;
+@@ -232,10 +233,15 @@
+ 			yield return new WaitForSeconds(timeWaitCooldownRun);
+ 			recharging = true;
+ 		}
+-	}
++	
++        Plugin.ClearDownedFear(this);
++        Plugin.TickFromGame();
++}
+ 
+ 	private void MoveCharacter()
+ 	{
++        if (Plugin.LocalPauseMenuOpen || Plugin.MatchSimulationPaused) return;
++
+ 		Vector3 motion = movementInput * speed * Time.deltaTime;
+ 		characterController.Move(motion);
+ 	}
+@@ -282,6 +288,18 @@
+ 
+ 	private IEnumerator goingDead()
+ 	{
++		return RunWhileDead(goingDeadOriginal());
++	}
++
++	private IEnumerator RunWhileDead(IEnumerator death)
++	{
++		while (Plugin.IsDead(this) && death.MoveNext())
++		{
++			yield return death.Current;
++		}
++	}
++
++	private IEnumerator goingDeadOriginal(){
+ 		yield return new WaitForSeconds(0.4f);
+ 		Invoke("shake", 0f);
+ 		canMove = false;
+@@ -294,6 +312,10 @@
+ 
+ 	private IEnumerator goingDeadInstantly()
+ 	{
++		return RunWhileDead(goingDeadInstantlyOriginal());
++	}
++
++	private IEnumerator goingDeadInstantlyOriginal(){
+ 		yield return new WaitForSeconds(0.01f);
+ 		Invoke("shake", 0f);
+ 		canMove = false;
+--- a/Assets/Scripts/Assembly-CSharp/recycler.cs
++++ b/Assets/Scripts/Assembly-CSharp/recycler.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using System.Collections;
+ using UnityEngine;
+ using UnityEngine.EventSystems;
+@@ -55,6 +56,7 @@
+ 
+ 	private void OnTriggerEnter(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			outline.SetActive(value: true);
+@@ -64,6 +66,7 @@
+ 
+ 	private void OnTriggerExit(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			outline.SetActive(value: false);
+@@ -74,6 +77,8 @@
+ 
+ 	public void OpenRecycler()
+ 	{
++        if (Plugin.LocalPauseMenuOpen || Plugin.MatchSimulationPaused) return;
++
+ 		EventSystem.current.SetSelectedGameObject(null);
+ 		StartCoroutine(setSelection());
+ 		Cursor.visible = true;
+--- a/Assets/Scripts/Assembly-CSharp/safeZone.cs
++++ b/Assets/Scripts/Assembly-CSharp/safeZone.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using System.Collections;
+ using UnityEngine;
+ 
+@@ -45,6 +46,8 @@
+ 
+ 	private void OnTriggerEnter(Collider other)
+ 	{
++        if (other == null || other.GetComponentInParent<playerController>() == null) return;
++
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			enemy.GetComponent<enemyController>().followPlayer = false;
+@@ -70,6 +73,8 @@
+ 
+ 	private void OnTriggerExit(Collider other)
+ 	{
++        if (other == null || other.GetComponentInParent<playerController>() == null) return;
++
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			fireplaceAnim.SetBool("Inside", value: false);
+@@ -98,6 +103,8 @@
+ 
+ 	private void OnTriggerStay(Collider other)
+ 	{
++        if (other == null || other.GetComponentInParent<playerController>() == null) return;
++
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			fireplaceAnim.SetBool("Inside", value: true);
+--- a/Assets/Scripts/Assembly-CSharp/shadowMonsterController.cs
++++ b/Assets/Scripts/Assembly-CSharp/shadowMonsterController.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using System.Collections;
+ using UnityEngine;
+ using UnityEngine.AI;
+@@ -79,6 +80,8 @@
+ 
+ 	private void Update()
+ 	{
++        if (!Plugin.BeforeShadowUpdate(this)) return;
++
+ 		if (runHide)
+ 		{
+ 			StartCoroutine(hide());
+@@ -119,6 +122,8 @@
+ 
+ 	private void OnTriggerEnter(Collider other)
+ 	{
++        if (!Plugin.BeforeShadowContact(this, other)) return;
++
+ 		if (other.gameObject.CompareTag("Player"))
+ 		{
+ 			StartCoroutine(goHideCoroutine());
+--- a/Assets/Scripts/Assembly-CSharp/shopManager.cs
++++ b/Assets/Scripts/Assembly-CSharp/shopManager.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using System.Collections;
+ using TMPro;
+ using UnityEngine;
+@@ -496,6 +497,7 @@
+ 
+ 	private void OnTriggerEnter(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			outline.GetComponent<Outline>().enabled = true;
+@@ -505,6 +507,7 @@
+ 
+ 	private void OnTriggerExit(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			outline.GetComponent<Outline>().enabled = false;
+@@ -515,10 +518,13 @@
+ 
+ 	public void buyUpgrade1()
+ 	{
+-		if (canUse && gameManager.GetComponent<moneyCount>().count >= costOfUpgrade1 && numOfUpgrade1 < 10)
+-		{
+-			gameManager.GetComponent<moneyCount>().count -= costOfUpgrade1;
+-			gameManager.GetComponent<moneyCount>().totalMoney += costOfUpgrade1;
++        if (!Plugin.BeforeWorkshopPurchase(System.Reflection.MethodBase.GetCurrentMethod())) return;
++        try
++        {
++		if (canUse && Plugin.WorkshopBalance(gameManager.GetComponent<moneyCount>()) >= costOfUpgrade1 && numOfUpgrade1 < 10)
++		{
++			Plugin.SetWorkshopBalance(gameManager.GetComponent<moneyCount>(), Plugin.WorkshopBalance(gameManager.GetComponent<moneyCount>()) - costOfUpgrade1);
++			Plugin.SetWorkshopTotal(gameManager.GetComponent<moneyCount>(), gameManager.GetComponent<moneyCount>().totalMoney + costOfUpgrade1);
+ 			numOfUpgrade1++;
+ 			buttonU1.GetComponent<mouseOver>().numberLevel++;
+ 			buttonU1.GetComponent<mouseOver>().UpdateBandeja();
+@@ -538,14 +544,23 @@
+ 			source.PlayOneShot(buySeedSound);
+ 			bandejaPlay.Play("bandejaMov1");
+ 		}
+-	}
++	
++        }
++        finally
++        {
++            Plugin.AfterWorkshopPurchase(this);
++        }
++    }
+ 
+ 	public void buyUpgrade2()
+ 	{
+-		if (gameManager.GetComponent<moneyCount>().count >= costOfUpgrade2 && numOfUpgrade2 < 10)
+-		{
+-			gameManager.GetComponent<moneyCount>().count -= costOfUpgrade2;
+-			gameManager.GetComponent<moneyCount>().totalMoney += costOfUpgrade2;
++        if (!Plugin.BeforeWorkshopPurchase(System.Reflection.MethodBase.GetCurrentMethod())) return;
++        try
++        {
++		if (Plugin.WorkshopBalance(gameManager.GetComponent<moneyCount>()) >= costOfUpgrade2 && numOfUpgrade2 < 10)
++		{
++			Plugin.SetWorkshopBalance(gameManager.GetComponent<moneyCount>(), Plugin.WorkshopBalance(gameManager.GetComponent<moneyCount>()) - costOfUpgrade2);
++			Plugin.SetWorkshopTotal(gameManager.GetComponent<moneyCount>(), gameManager.GetComponent<moneyCount>().totalMoney + costOfUpgrade2);
+ 			numOfUpgrade2++;
+ 			buttonU2.GetComponent<mouseOver>().numberLevel++;
+ 			buttonU2.GetComponent<mouseOver>().UpdateBandeja();
+@@ -565,15 +580,24 @@
+ 			source.PlayOneShot(buySeedSound);
+ 			bandejaPlay.Play("bandejaMov1");
+ 		}
+-	}
++	
++        }
++        finally
++        {
++            Plugin.AfterWorkshopPurchase(this);
++        }
++    }
+ 
+ 	public void buyUpgrade3()
+ 	{
+-		if (gameManager.GetComponent<moneyCount>().count >= costOfUpgrade3 && numOfUpgrade3 < 10)
++        if (!Plugin.BeforeWorkshopPurchase(System.Reflection.MethodBase.GetCurrentMethod())) return;
++        try
++        {
++		if (Plugin.WorkshopBalance(gameManager.GetComponent<moneyCount>()) >= costOfUpgrade3 && numOfUpgrade3 < 10)
+ 		{
+ 			playerControllerScript.GetComponent<playerController>().speed = playerControllerScript.GetComponent<playerController>().regularSpeed;
+-			gameManager.GetComponent<moneyCount>().count -= costOfUpgrade3;
+-			gameManager.GetComponent<moneyCount>().totalMoney += costOfUpgrade3;
++			Plugin.SetWorkshopBalance(gameManager.GetComponent<moneyCount>(), Plugin.WorkshopBalance(gameManager.GetComponent<moneyCount>()) - costOfUpgrade3);
++			Plugin.SetWorkshopTotal(gameManager.GetComponent<moneyCount>(), gameManager.GetComponent<moneyCount>().totalMoney + costOfUpgrade3);
+ 			numOfUpgrade3++;
+ 			buttonU3.GetComponent<mouseOver>().numberLevel++;
+ 			buttonU3.GetComponent<mouseOver>().UpdateBandeja();
+@@ -598,14 +622,23 @@
+ 			source.PlayOneShot(buySeedSound);
+ 			bandejaPlay.Play("bandejaMov1");
+ 		}
+-	}
++	
++        }
++        finally
++        {
++            Plugin.AfterWorkshopPurchase(this);
++        }
++    }
+ 
+ 	public void buyUpgrade4()
+ 	{
+-		if (gameManager.GetComponent<moneyCount>().count >= costOfUpgrade4 && numOfUpgrade4 < 10)
+-		{
+-			gameManager.GetComponent<moneyCount>().count -= costOfUpgrade4;
+-			gameManager.GetComponent<moneyCount>().totalMoney += costOfUpgrade4;
++        if (!Plugin.BeforeWorkshopPurchase(System.Reflection.MethodBase.GetCurrentMethod())) return;
++        try
++        {
++		if (Plugin.WorkshopBalance(gameManager.GetComponent<moneyCount>()) >= costOfUpgrade4 && numOfUpgrade4 < 10)
++		{
++			Plugin.SetWorkshopBalance(gameManager.GetComponent<moneyCount>(), Plugin.WorkshopBalance(gameManager.GetComponent<moneyCount>()) - costOfUpgrade4);
++			Plugin.SetWorkshopTotal(gameManager.GetComponent<moneyCount>(), gameManager.GetComponent<moneyCount>().totalMoney + costOfUpgrade4);
+ 			numOfUpgrade4++;
+ 			buttonU4.GetComponent<mouseOver>().numberLevel++;
+ 			buttonU4.GetComponent<mouseOver>().UpdateBandeja();
+@@ -624,10 +657,19 @@
+ 			source.PlayOneShot(buySeedSound);
+ 			bandejaPlay.Play("bandejaMov1");
+ 		}
+-	}
++	
++        }
++        finally
++        {
++            Plugin.AfterWorkshopPurchase(this);
++        }
++    }
+ 
+ 	public void buyKey1()
+ 	{
++        if (!Plugin.BeforeRemoteKeyPurchase(this, "buyKey1")) return;
++        try
++        {
+ 		if (gameManager.GetComponent<moneyCount>().count >= costOfKey1)
+ 		{
+ 			gameManager.GetComponent<moneyCount>().count -= costOfKey1;
+@@ -653,10 +695,19 @@
+ 			source.PlayOneShot(buySeedSound);
+ 			bandejaPlay.Play("bandejaMov1");
+ 		}
+-	}
++	
++        }
++        finally
++        {
++            Plugin.AfterKeyPurchase(this, "buyKey1");
++        }
++    }
+ 
+ 	public void buyKey2()
+ 	{
++        if (!Plugin.BeforeRemoteKeyPurchase(this, "buyKey2")) return;
++        try
++        {
+ 		if (gameManager.GetComponent<moneyCount>().count >= costOfKey2)
+ 		{
+ 			gameManager.GetComponent<moneyCount>().count -= costOfKey2;
+@@ -682,10 +733,19 @@
+ 			source.PlayOneShot(buySeedSound);
+ 			bandejaPlay.Play("bandejaMov1");
+ 		}
+-	}
++	
++        }
++        finally
++        {
++            Plugin.AfterKeyPurchase(this, "buyKey2");
++        }
++    }
+ 
+ 	public void buyKey3()
+ 	{
++        if (!Plugin.BeforeRemoteKeyPurchase(this, "buyKey3")) return;
++        try
++        {
+ 		if (gameManager.GetComponent<moneyCount>().count >= costOfKey3)
+ 		{
+ 			gameManager.GetComponent<moneyCount>().count -= costOfKey3;
+@@ -711,10 +771,19 @@
+ 			source.PlayOneShot(buySeedSound);
+ 			bandejaPlay.Play("bandejaMov1");
+ 		}
+-	}
++	
++        }
++        finally
++        {
++            Plugin.AfterKeyPurchase(this, "buyKey3");
++        }
++    }
+ 
+ 	public void buyKey4()
+ 	{
++        if (!Plugin.BeforeRemoteKeyPurchase(this, "buyKey4")) return;
++        try
++        {
+ 		if (gameManager.GetComponent<moneyCount>().count >= costOfKey4)
+ 		{
+ 			gameManager.GetComponent<moneyCount>().count -= costOfKey4;
+@@ -740,7 +809,13 @@
+ 			source.PlayOneShot(buySeedSound);
+ 			bandejaPlay.Play("bandejaMov1");
+ 		}
+-	}
++	
++        }
++        finally
++        {
++            Plugin.AfterKeyPurchase(this, "buyKey4");
++        }
++    }
+ 
+ 	public void buySeed1()
+ 	{
+@@ -844,6 +919,9 @@
+ 
+ 	public void buyMotor()
+ 	{
++        if (!Plugin.BeforeMotorPurchase()) return;
++        try
++        {
+ 		if (gameManager.GetComponent<moneyCount>().count >= costOfMotor && numOfMotor < 2)
+ 		{
+ 			buttonM.GetComponent<mouseOver>().numberLevel = numOfMotor;
+@@ -866,7 +944,13 @@
+ 			source.PlayOneShot(buySeedSound);
+ 			bandejaPlay.Play("bandejaMov1");
+ 		}
+-	}
++	
++        }
++        finally
++        {
++            
++        }
++    }
+ 
+ 	public void buyOil()
+ 	{
+@@ -1015,6 +1099,8 @@
+ 
+ 	public void OpenShop()
+ 	{
++        if (Plugin.LocalPauseMenuOpen || Plugin.MatchSimulationPaused) return;
++
+ 		showShop = true;
+ 		EventSystem.current.SetSelectedGameObject(null);
+ 		EventSystem.current.SetSelectedGameObject(uiFirstButton);
+--- a/Assets/Scripts/Assembly-CSharp/slowDownPlayer.cs
++++ b/Assets/Scripts/Assembly-CSharp/slowDownPlayer.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using System.Collections;
+ using UnityEngine;
+ 
+@@ -23,6 +24,8 @@
+ 
+ 	private void Update()
+ 	{
++        if (Plugin.InCoop && !Plugin.ShadowTargetsLocalPlayer) onRange = false;
++
+ 		if (shadowMonsterController.followPlayer)
+ 		{
+ 			attacking = true;
+@@ -46,6 +49,8 @@
+ 
+ 	private void OnTriggerStay(Collider other)
+ 	{
++        if (Plugin.InCoop && (other == null || other.GetComponentInParent<RemotePlayerProxy>() != null || !Plugin.ShadowTargetsLocalPlayer)) return;
++
+ 		if (other.CompareTag("Player") && attacking)
+ 		{
+ 			onRange = true;
+@@ -55,6 +60,8 @@
+ 
+ 	private void OnTriggerEnter(Collider other)
+ 	{
++        if (Plugin.InCoop && (other == null || other.GetComponentInParent<RemotePlayerProxy>() != null || !Plugin.ShadowTargetsLocalPlayer)) return;
++
+ 		if (other.CompareTag("Player") && attacking)
+ 		{
+ 			shadowSlow1.Play();
+@@ -66,6 +73,8 @@
+ 
+ 	private void OnTriggerExit(Collider other)
+ 	{
++        if (Plugin.InCoop && (other == null || other.GetComponentInParent<RemotePlayerProxy>() != null)) return;
++
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			onRange = false;
+--- a/Assets/Scripts/Assembly-CSharp/takeBat.cs
++++ b/Assets/Scripts/Assembly-CSharp/takeBat.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using UnityEngine;
+ using UnityEngine.InputSystem;
+ 
+@@ -91,6 +92,7 @@
+ 
+ 	private void OnTriggerEnter(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			onRange = true;
+@@ -104,6 +106,7 @@
+ 
+ 	private void OnTriggerExit(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			onRange = false;
+--- a/Assets/Scripts/Assembly-CSharp/takeFrog.cs
++++ b/Assets/Scripts/Assembly-CSharp/takeFrog.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using UnityEngine;
+ using UnityEngine.InputSystem;
+ 
+@@ -34,6 +35,7 @@
+ 
+ 	private void OnTriggerEnter(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			onRange = true;
+@@ -47,6 +49,7 @@
+ 
+ 	private void OnTriggerExit(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			onRange = false;
+--- a/Assets/Scripts/Assembly-CSharp/takeNote.cs
++++ b/Assets/Scripts/Assembly-CSharp/takeNote.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using System.Collections;
+ using UnityEngine;
+ using UnityEngine.InputSystem;
+@@ -57,6 +58,7 @@
+ 
+ 	private void OnTriggerEnter(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			insideTrigger = true;
+@@ -65,6 +67,7 @@
+ 
+ 	private void OnTriggerExit(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			insideTrigger = false;
+--- a/Assets/Scripts/Assembly-CSharp/takeSoul.cs
++++ b/Assets/Scripts/Assembly-CSharp/takeSoul.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using System.Collections;
+ using UnityEngine;
+ using UnityEngine.InputSystem;
+@@ -51,6 +52,7 @@
+ 
+ 	private void OnTriggerEnter(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			atRange = true;
+@@ -59,6 +61,7 @@
+ 
+ 	private void OnTriggerExit(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			atRange = false;
+--- a/Assets/Scripts/Assembly-CSharp/takeStick.cs
++++ b/Assets/Scripts/Assembly-CSharp/takeStick.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using UnityEngine;
+ using UnityEngine.InputSystem;
+ 
+@@ -19,6 +20,7 @@
+ 
+ 	private void OnTriggerStay(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
+ 		if ((other.CompareTag("Player") && Input.GetButton("Interact")) || (Gamepad.current != null && other.CompareTag("Player") && Gamepad.current.buttonSouth.isPressed))
+ 		{
+ 			base.gameObject.GetComponent<BoxCollider>().enabled = false;
+@@ -34,6 +36,7 @@
+ 
+ 	private void OnTriggerEnter(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			outlineStick.SetActive(value: true);
+@@ -42,6 +45,7 @@
+ 
+ 	private void OnTriggerExit(Collider other)
+ 	{
++        if (Plugin.InCoop && other != null && other.GetComponentInParent<RemotePlayerProxy>() != null) return;
+ 		if (other.CompareTag("Player"))
+ 		{
+ 			outlineStick.SetActive(value: false);
+--- a/Assets/Scripts/Assembly-CSharp/wakeUpEvent.cs
++++ b/Assets/Scripts/Assembly-CSharp/wakeUpEvent.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using System.Collections;
+ using Cinemachine;
+ using UnityEngine;
+@@ -135,6 +136,9 @@
+ 
+ 	private void Update()
+ 	{
++        Plugin.TickFromGame();
++        if (!Plugin.CanAdvanceOpening) return;
++
+ 		if (!isNightmare)
+ 		{
+ 			if (canSkipTuto == 1 && !used)
+@@ -200,7 +204,8 @@
+ 			source.PlayOneShot(crowFly);
+ 			StartCoroutine(startPlaying());
+ 		}
+-	}
++	
++}
+ 
+ 	private IEnumerator startPressF()
+ 	{
+@@ -268,6 +273,13 @@
+ 
+ 	public void SkipTutorial()
+ 	{
++        bool runOriginal = Plugin.CanRunTutorialSkip;
++        if (runOriginal) Plugin.PrepareTutorialSkip(this);
++        try
++        {
++            if (!runOriginal) return;
++
++
+ 		used = true;
+ 		tutorialEvent.skipTuto = true;
+ 		firstSeedsAnim.speed = 30f;
+@@ -294,10 +306,24 @@
+ 			moveTuto.SetActive(value: true);
+ 		}
+ 		StartCoroutine(letPauseGame());
+-	}
++	
++
++        }
++        finally
++        {
++            Plugin.TutorialSkipped();
++        }
++    }
+ 
+ 	public void SkipTutorialNightmare()
+ 	{
++        bool runOriginal = Plugin.CanRunTutorialSkip;
++        if (runOriginal) Plugin.PrepareTutorialSkip(this);
++        try
++        {
++            if (!runOriginal) return;
++
++
+ 		used = true;
+ 		tutorialEventNightmare.GetComponent<SphereCollider>().enabled = false;
+ 		tutorialEventNightmare.enabled = false;
+@@ -326,7 +352,14 @@
+ 			moveTuto.SetActive(value: true);
+ 		}
+ 		StartCoroutine(letPauseGame());
+-	}
++	
++
++        }
++        finally
++        {
++            Plugin.TutorialSkipped();
++        }
++    }
+ 
+ 	private IEnumerator letPauseGame()
+ 	{
+--- a/Assets/Scripts/Assembly-CSharp/wendigoController.cs
++++ b/Assets/Scripts/Assembly-CSharp/wendigoController.cs
+@@ -1,3 +1,4 @@
++using PumpkinPanicCoop;
+ using System.Collections;
+ using UnityEngine;
+ using UnityEngine.AI;
+@@ -99,6 +100,8 @@
+ 
+ 	private void Update()
+ 	{
++        if (!Plugin.BeforeDeerUpdate(this)) return;
++
+ 		timeToIdle -= Time.deltaTime;
+ 		if (timeToIdle <= 0f && !canKill)
+ 		{
+@@ -150,6 +153,8 @@
+ 
+ 	private void OnTriggerStay(Collider other)
+ 	{
++        if (!Plugin.BeforeDeerContact(this, other)) return;
++
+ 		if (!canKill && other.CompareTag("Player"))
+ 		{
+ 			StartCoroutine(transformWendigo());
+@@ -196,7 +201,13 @@
+ 	}
+ 
+ 	private IEnumerator backToDeer()
+-	{
++	
++    {
++        return Plugin.FinishDeerPursuit(this, backToDeerOriginal());
++    }
++
++    private IEnumerator backToDeerOriginal()
++    {
+ 		yield return new WaitForSeconds(6f);
+ 		StartCoroutine(deerAgain());
+ 		agent.speed = 0.4f;
+@@ -208,7 +219,9 @@
+ 		faceChanger.SetActive(value: false);
+ 		panicFace.SetActive(value: false);
+ 		megaPanicFace.SetActive(value: false);
+-	}
++	
++    }
++
+ 
+ 	private IEnumerator deerAgain()
+ 	{
+@@ -252,6 +265,8 @@
+ 
+ 	private void tryKill()
+ 	{
++        if (!Plugin.BeforeDeerKill(this)) return;
++
+ 		if (followPlayer)
+ 		{
+ 			animWendigo.SetBool("eat", value: true);

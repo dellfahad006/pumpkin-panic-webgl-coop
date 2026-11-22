@@ -197,8 +197,12 @@ jobs:
       - name: Apply gameplay and performance patches
         run: python3 ci/patch_game.py project
 
-      - name: Install WebGL co-op client files
-        run: python3 ci/install_webgl_coop.py project
+      - name: Install Photon PUN 2.50 co-op port
+        env:
+          PUN2_UNITYPACKAGE_URL: ${{ secrets.PUN2_UNITYPACKAGE_URL }}
+          PUN2_UNITYPACKAGE_TOKEN: ${{ secrets.PUN2_UNITYPACKAGE_TOKEN }}
+          PHOTON_APP_ID: ${{ secrets.PHOTON_APP_ID }}
+        run: python3 ci/install_pun_coop.py project
 
       - name: Shrink non-sprite textures only
         run: |
@@ -598,6 +602,17 @@ jobs:
           key: Library-WebGL-ubuntu-22.04-2020.3.40f1-${{ hashFiles('project/Assets/**', 'project/Packages/**', 'project/ProjectSettings/**') }}
           restore-keys: |
             Library-WebGL-ubuntu-22.04-2020.3.40f1-
+
+      - name: Generate PhotonServerSettings with Unity Editor
+        env:
+          PHOTON_APP_ID: ${{ secrets.PHOTON_APP_ID }}
+        run: |
+          /home/runner/Unity/Hub/Editor/2020.3.40f1/Editor/Unity \
+            -projectPath project \
+            -logFile "$GITHUB_WORKSPACE/photon-settings.log" \
+            -batchmode -quit \
+            -executeMethod PumpkinPanicCoop.Editor.GeneratePhotonServerSettings.CreateOrUpdate
+          test -f "project/Assets/Photon/PhotonUnityNetworking/Resources/PhotonServerSettings.asset"
 
       - name: Build WebGL Project
         run: |

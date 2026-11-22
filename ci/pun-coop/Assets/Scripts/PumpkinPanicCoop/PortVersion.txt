@@ -1,0 +1,2 @@
+Pumpkin Panic co-op port: Photon PUN 2.50
+Packet protocol: original Steam P2P byte packets preserved.
