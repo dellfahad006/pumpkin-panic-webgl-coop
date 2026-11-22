@@ -58,12 +58,16 @@ namespace PumpkinPanicCoop.Runtime
                 // SetMatchPaused uses Time.timeScale = 0; keep PUN event dispatching in LateUpdate.
                 PhotonNetwork.MinimalTimeScaleToDispatchInFixedUpdate = 0f;
 
+                WebGLForensicDiagnostics.Mark("PHOTON_AWAKE_BEFORE_PLAYERPREFS_READ");
                 string userId = PlayerPrefs.GetString("PumpkinPanicPhotonUserId", string.Empty);
+                WebGLForensicDiagnostics.Mark("PHOTON_AWAKE_AFTER_PLAYERPREFS_READ");
                 if (string.IsNullOrEmpty(userId))
                 {
                     userId = Guid.NewGuid().ToString("N");
                     PlayerPrefs.SetString("PumpkinPanicPhotonUserId", userId);
+                    WebGLForensicDiagnostics.Mark("PHOTON_USER_ID_BEFORE_PLAYERPREFS_SAVE");
                     PlayerPrefs.Save();
+                    WebGLForensicDiagnostics.Mark("PHOTON_USER_ID_AFTER_PLAYERPREFS_SAVE");
                     Debug.Log("[PumpkinPanicCoop][PHOTON] Generated and persisted a Photon user ID.");
                 }
 
@@ -75,6 +79,7 @@ namespace PumpkinPanicCoop.Runtime
                     PhotonNetwork.NetworkingClient.State + ", connected=" + PhotonNetwork.IsConnected +
                     ", ready=" + PhotonNetwork.IsConnectedAndReady);
 
+                WebGLForensicDiagnostics.Mark("PHOTON_AWAKE_BEFORE_DEFERRED_CONNECT");
                 Debug.Log("[PumpkinPanicCoop][PHOTON] Automatic startup connection deferred for isolation test; use the Connect button on the main menu.");
                 Debug.Log("[PumpkinPanicCoop][PHOTON] Awake completed without opening a WebSocket; state=" +
                     PhotonNetwork.NetworkingClient.State + ", connected=" + PhotonNetwork.IsConnected);
@@ -89,6 +94,7 @@ namespace PumpkinPanicCoop.Runtime
 
         public void Connect()
         {
+            WebGLForensicDiagnostics.Mark("PHOTON_CONNECT_METHOD_ENTERED");
             Debug.Log("[PumpkinPanicCoop][PHOTON] Connect requested; state=" +
                 PhotonNetwork.NetworkingClient.State + ", connected=" + PhotonNetwork.IsConnected +
                 ", ready=" + PhotonNetwork.IsConnectedAndReady);
@@ -119,7 +125,9 @@ namespace PumpkinPanicCoop.Runtime
                     Debug.LogError("[PumpkinPanicCoop][PHOTON] PhotonServerSettings is null before ConnectUsingSettings.");
                 }
 
+                WebGLForensicDiagnostics.Mark("PHOTON_BEFORE_CONNECT_USING_SETTINGS");
                 bool started = PhotonNetwork.ConnectUsingSettings();
+                WebGLForensicDiagnostics.Mark("PHOTON_AFTER_CONNECT_USING_SETTINGS_RETURNED_" + started);
                 Debug.Log("[PumpkinPanicCoop][PHOTON] ConnectUsingSettings returned " + started +
                     "; state=" + PhotonNetwork.NetworkingClient.State + ", connected=" +
                     PhotonNetwork.IsConnected + ", ready=" + PhotonNetwork.IsConnectedAndReady);
