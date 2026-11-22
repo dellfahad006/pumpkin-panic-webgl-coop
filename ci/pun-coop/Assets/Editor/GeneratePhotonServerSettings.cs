@@ -49,10 +49,12 @@ namespace PumpkinPanicCoop.Editor
                 settings.AppSettings = new AppSettings();
             settings.AppSettings.AppIdRealtime = appId.Trim();
             settings.AppSettings.UseNameServer = true;
+            settings.PunLogging = PunLogLevel.Full;
+            settings.EnableSupportLogger = true;
             EditorUtility.SetDirty(settings);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-            Debug.Log("[PumpkinPanicCoop] PhotonServerSettings created/configured for PUN WebGL build.");
+            Debug.Log("[PumpkinPanicCoop] PhotonServerSettings created/configured for PUN WebGL build with full PUN logging and SupportLogger enabled.");
         }
     }
 }
