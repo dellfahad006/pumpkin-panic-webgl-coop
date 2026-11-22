@@ -4,6 +4,15 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      build_mode:
+        description: 'Choose a full WebGL deployment or fast C# validation'
+        type: choice
+        required: true
+        default: full
+        options:
+          - full
+          - validate
 
 permissions:
   contents: read
@@ -13,7 +22,12 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-22.04
+    outputs:
+      build_mode: ${{ steps.mode.outputs.value }}
     steps:
+      - id: mode
+        name: Select build mode
+        run: echo "value=${{ github.event.inputs.build_mode || 'full' }}" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v4
 
       - name: Free disk space
@@ -589,6 +603,14 @@ jobs:
           username: ${{ secrets.UNITY_USERNAME }}
           password: ${{ secrets.UNITY_PASSWORD }}
 
+      - name: Cache npm downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: npm-${{ runner.os }}-${{ hashFiles('project/Packages/manifest.json') }}
+          restore-keys: |
+            npm-${{ runner.os }}-
+
       - name: Add Buildalon Build Pipeline Package
         working-directory: project
         run: |
@@ -603,31 +625,34 @@ jobs:
           restore-keys: |
             Library-WebGL-ubuntu-22.04-2020.3.40f1-
 
-      - name: Generate PhotonServerSettings with Unity Editor
+      - name: Run Unity validation or full build (single Editor launch)
         env:
           PHOTON_APP_ID: ${{ secrets.PHOTON_APP_ID }}
+          BUILD_MODE: ${{ steps.mode.outputs.value }}
         run: |
-          xvfb-run -a --server-args="-screen 0 1280x720x24" \
-            /home/runner/Unity/Hub/Editor/2020.3.40f1/Editor/Unity \
-            -projectPath project \
-            -logFile "$GITHUB_WORKSPACE/photon-settings.log" \
-            -automated \
-            -batchmode -quit \
-            -executeMethod PumpkinPanicCoop.Editor.GeneratePhotonServerSettings.CreateOrUpdate
-          test -f "project/Assets/Photon/PhotonUnityNetworking/Resources/PhotonServerSettings.asset"
+          if [ "$BUILD_MODE" = "full" ]; then
+            METHOD="PumpkinPanicCoop.Editor.GeneratePhotonServerSettings.BuildWebGL"
+            mkdir -p project/Builds/Logs
+            LOG="$GITHUB_WORKSPACE/unity-build.log"
+            EXTRA_ARGS="-buildTarget WebGL -job-worker-count 1"
+          else
+            METHOD="PumpkinPanicCoop.Editor.GeneratePhotonServerSettings.ValidateScripts"
+            LOG="$GITHUB_WORKSPACE/photon-validation.log"
+            EXTRA_ARGS=""
+          fi
 
-      - name: Build WebGL Project
-        run: |
-          mkdir -p project/Builds/Logs
           xvfb-run -a --server-args="-screen 0 1280x720x24" \
             /home/runner/Unity/Hub/Editor/2020.3.40f1/Editor/Unity \
             -projectPath project \
-            -logFile "$GITHUB_WORKSPACE/unity-build.log" \
-            -automated \
-            -buildTarget WebGL \
-            -quit -batchmode \
-            -job-worker-count 1 \
-            -executeMethod Buildalon.Editor.BuildPipeline.UnityPlayerBuildTools.StartCommandLineBuild
+            -logFile "$LOG" \
+            -automated -batchmode -quit $EXTRA_ARGS \
+            -executeMethod "$METHOD"
+
+          test -f "project/Assets/Photon/PhotonUnityNetworking/Resources/PhotonServerSettings.asset"
+          if grep -Eq 'error CS[0-9]+' "$LOG"; then
+            echo "C# compiler errors were found in the Unity log."
+            exit 1
+          fi
 
       - name: Show end of Unity log if failed
         if: failure()
@@ -652,6 +677,7 @@ jobs:
 
 
       - name: Prepare build folder
+        if: steps.mode.outputs.value == 'full'
         run: |
           set -e
           echo "Searching for WebGL index.html..."
@@ -675,18 +701,21 @@ jobs:
           find pages-artifact -type f -size +90M -exec ls -lh {} \;
 
       - name: Upload downloadable WebGL build
+        if: steps.mode.outputs.value == 'full'
         uses: actions/upload-artifact@v4
         with:
           name: pumpkin-panic-webgl
           path: pages-artifact
           retention-days: 14
 
-      - uses: actions/upload-pages-artifact@v3
+      - if: steps.mode.outputs.value == 'full'
+        uses: actions/upload-pages-artifact@v3
         with:
           path: pages-artifact
 
   deploy:
     needs: build
+    if: needs.build.outputs.build_mode == 'full'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
