@@ -64,8 +64,7 @@ internal sealed class RemotePet
 		{
 			return;
 		}
-		Vector3 val = default(Vector3);
-		val..ctor(BitConverter.ToSingle(packet, offset + 1), BitConverter.ToSingle(packet, offset + 5), BitConverter.ToSingle(packet, offset + 9));
+		Vector3 val = new Vector3(BitConverter.ToSingle(packet, offset + 1), BitConverter.ToSingle(packet, offset + 5), BitConverter.ToSingle(packet, offset + 9));
 		if (float.IsNaN(val.sqrMagnitude) || float.IsInfinity(val.sqrMagnitude))
 		{
 			return;

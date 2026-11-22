@@ -220,6 +220,7 @@ namespace Steamworks.Data
         }
         public bool Refresh() { return Current != null; }
         public void Leave() { if (Current != null) PhotonNetwork.LeaveRoom(false); }
+        public System.Threading.Tasks.Task<RoomEnter> Join() { return System.Threading.Tasks.Task.FromResult(IsValid ? RoomEnter.Success : RoomEnter.Error); }
         private static ulong StableRoomId(string name)
         {
             // FNV-1a 64-bit, used only for the legacy lobby-ID packet field.

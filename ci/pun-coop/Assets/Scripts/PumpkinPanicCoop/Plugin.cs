@@ -4451,7 +4451,7 @@ public sealed class Plugin : MonoBehaviour
 		if (IsGuest)
 		{
 			Lobby value = _lobby.Value;
-			if (Enumerable.Contains((value.GetData("ppcoop_rejected_joins") ?? "").Split(new char[1] { ',' }), (ulong)(SteamClient.SteamId).ToString()))
+			if (Enumerable.Contains((value.GetData("ppcoop_rejected_joins") ?? "").Split(new char[1] { ',' }), ((ulong)(SteamClient.SteamId)).ToString()))
 			{
 				ReturnFromClosedLobby();
 				_status = "Could not join. The host is already in a match.";
@@ -4481,7 +4481,7 @@ public sealed class Plugin : MonoBehaviour
 					Navigation value = item.Value;
 					if (!lobbyControllerAllowed)
 					{
-						value.mode = (Mode)0;
+						value.mode = (Navigation.Mode)0;
 					}
 					item.Key.navigation = value;
 				}
@@ -4537,7 +4537,7 @@ public sealed class Plugin : MonoBehaviour
 		_lobbyHistoryScroll.viewport = val2;
 		_lobbyHistoryScroll.content = ((Graphic)_lobbyHistoryText).rectTransform;
 		_lobbyHistoryScroll.horizontal = false;
-		_lobbyHistoryScroll.movementType = (MovementType)2;
+		_lobbyHistoryScroll.movementType = (ScrollRect.MovementType)2;
 		_lobbyHistoryScroll.scrollSensitivity = 22f * unit;
 		_collapsibleUiObjects.Add(val);
 		RenderLobbyHistory();
@@ -4552,7 +4552,7 @@ public sealed class Plugin : MonoBehaviour
 			_lobbyHistoryText.text = ((_lobbyHistory.Count == 0) ? _status : string.Join("\n", _lobbyHistory));
 			Rect rect = _lobbyHistoryScroll.viewport.rect;
 			float num = Mathf.Max(rect.height - 3f * _lobbyUiUnit, _lobbyHistoryText.preferredHeight + 3f * _lobbyUiUnit);
-			((Graphic)_lobbyHistoryText).rectTransform.SetSizeWithCurrentAnchors((Axis)1, num);
+			((Graphic)_lobbyHistoryText).rectTransform.SetSizeWithCurrentAnchors((RectTransform.Axis)1, num);
 			_lobbyHistoryScroll.verticalNormalizedPosition = 0f;
 		}
 	}
@@ -4612,7 +4612,7 @@ public sealed class Plugin : MonoBehaviour
 		_lobbyRosterScroll.viewport = val2;
 		_lobbyRosterScroll.content = ((Graphic)_lobbyRoster).rectTransform;
 		_lobbyRosterScroll.horizontal = false;
-		_lobbyRosterScroll.movementType = (MovementType)2;
+		_lobbyRosterScroll.movementType = (ScrollRect.MovementType)2;
 		_collapsibleUiObjects.Add(val);
 		Text val3 = CreateRosterText("CapacityLabel", transform, 17f * unit);
 		val3.text = "Max players";
@@ -4631,7 +4631,7 @@ public sealed class Plugin : MonoBehaviour
 		_lobbyCapacity = val4.AddComponent<InputField>();
 		((Selectable)_lobbyCapacity).targetGraphic = (Graphic)(object)component;
 		_lobbyCapacity.textComponent = val5;
-		_lobbyCapacity.contentType = (ContentType)2;
+		_lobbyCapacity.contentType = (InputField.ContentType)2;
 		_lobbyCapacity.characterLimit = 2;
 		_capacityFieldLobby = default(SteamId);
 		_capacityFieldValue = 0;
@@ -4750,7 +4750,7 @@ public sealed class Plugin : MonoBehaviour
 		if (!(_lobbyRoster.text == text))
 		{
 			_lobbyRoster.text = text;
-			((Graphic)_lobbyRoster).rectTransform.SetSizeWithCurrentAnchors((Axis)1, Mathf.Max(92f * _lobbyUiUnit, _lobbyRoster.preferredHeight));
+			((Graphic)_lobbyRoster).rectTransform.SetSizeWithCurrentAnchors((RectTransform.Axis)1, Mathf.Max(92f * _lobbyUiUnit, _lobbyRoster.preferredHeight));
 			if ((Object)(object)_lobbyRosterScroll != (Object)null)
 			{
 				_lobbyRosterScroll.verticalNormalizedPosition = 1f;
@@ -5188,7 +5188,7 @@ public sealed class Plugin : MonoBehaviour
 		//IL_0018: Unknown result type (might be due to invalid IL or missing references)
 		if (!((Object)(object)particles == (Object)null))
 		{
-			EmissionModule emission = particles.emission;
+			ParticleSystem.EmissionModule emission = particles.emission;
 			emission.rateOverTime = new ParticleSystem.MinMaxCurve(0f);
 			particles.Clear();
 		}
@@ -5902,7 +5902,7 @@ public sealed class Plugin : MonoBehaviour
 		if (IsGuest)
 		{
 			string data = value.GetData("ppcoop_load_timeout");
-			if (!string.IsNullOrEmpty(data) && Enumerable.Contains(data.Split(new char[1] { ',' }), (ulong)(SteamClient.SteamId).ToString()))
+			if (!string.IsNullOrEmpty(data) && Enumerable.Contains(data.Split(new char[1] { ',' }), ((ulong)(SteamClient.SteamId)).ToString()))
 			{
 				ReturnFromClosedLobby();
 				_status = "Removed from lobby because the farm did not load in time.";
@@ -6645,7 +6645,7 @@ public sealed class Plugin : MonoBehaviour
 		{
 			Lobby value = _lobby.Value;
 			value.SetJoinable(false);
-			value.SetData("ppcoop_closed_by", (ulong)(SteamClient.SteamId).ToString());
+			value.SetData("ppcoop_closed_by", ((ulong)(SteamClient.SteamId)).ToString());
 			_status = "Closing lobby…";
 			_lobbyClosureDeadline = Time.realtimeSinceStartup + 5f;
 			SendLobbyClosure(value);
@@ -7714,8 +7714,7 @@ public sealed class Plugin : MonoBehaviour
 		}
 		if (b == 51 && size == 17 && !IsGuest && !MatchSimulationPaused && _confirmedLobbyMembers.Contains((ulong)(sender)) && _spectators.TryGetValue((ulong)(sender), out SpectatorCrow value4))
 		{
-			Vector2 val = default(Vector2);
-			val..ctor(BitConverter.ToSingle(_packetBuffer, 9), BitConverter.ToSingle(_packetBuffer, 13));
+			Vector2 val = new Vector2(BitConverter.ToSingle(_packetBuffer, 9), BitConverter.ToSingle(_packetBuffer, 13));
 			if (val.sqrMagnitude <= 1.01f)
 			{
 				value4.Input = Vector2.ClampMagnitude(val, 1f);
@@ -7750,8 +7749,7 @@ public sealed class Plugin : MonoBehaviour
 				{
 					return true;
 				}
-				Vector3 position = default(Vector3);
-				position..ctor(BitConverter.ToSingle(_packetBuffer, 22), BitConverter.ToSingle(_packetBuffer, 26), BitConverter.ToSingle(_packetBuffer, 30));
+				Vector3 position = new Vector3(BitConverter.ToSingle(_packetBuffer, 22), BitConverter.ToSingle(_packetBuffer, 26), BitConverter.ToSingle(_packetBuffer, 30));
 				if (!_spectators.TryGetValue(num5, out SpectatorCrow value6))
 				{
 					value6 = CreateSpectatorCrow(val2, position);
@@ -8303,9 +8301,9 @@ public sealed class Plugin : MonoBehaviour
 		Object.DontDestroyOnLoad((Object)(object)((Component)this).gameObject);
 		Log.LogInfo((object)"Marked the game-owned co-op runtime persistent across scene loads.");
 		SceneManager.sceneLoaded += OnSceneLoaded;
-		Canvas.willRenderCanvases += new WillRenderCanvases(ProbeCanvasDuringRender);
-		Camera.onPreCull = (CameraCallback)Delegate.Combine((Delegate?)(object)Camera.onPreCull, (Delegate?)new CameraCallback(SortActorsBeforeCull));
-		Camera.onPreRender = (CameraCallback)Delegate.Combine((Delegate?)(object)Camera.onPreRender, (Delegate?)new CameraCallback(TraceActorsBeforeRender));
+		Canvas.willRenderCanvases += new Canvas.WillRenderCanvases(ProbeCanvasDuringRender);
+		Camera.onPreCull = (Camera.CameraCallback)Delegate.Combine((Delegate?)(object)Camera.onPreCull, (Delegate?)new Camera.CameraCallback(SortActorsBeforeCull));
+		Camera.onPreRender = (Camera.CameraCallback)Delegate.Combine((Delegate?)(object)Camera.onPreRender, (Delegate?)new Camera.CameraCallback(TraceActorsBeforeRender));
 		try
 		{
 			if (!SteamClient.IsValid)
@@ -9306,8 +9304,7 @@ public sealed class Plugin : MonoBehaviour
 		if (flag)
 		{
 			AttachRemoteEnemyControl(value);
-			Vector3 position = default(Vector3);
-			position..ctor(BitConverter.ToSingle(packet, 5), BitConverter.ToSingle(packet, 9), BitConverter.ToSingle(packet, 13));
+			Vector3 position = new Vector3(BitConverter.ToSingle(packet, 5), BitConverter.ToSingle(packet, 9), BitConverter.ToSingle(packet, 13));
 			((Component)value).GetComponent<RemoteEnemyInterpolator>().SetSnapshot(position, (packet[17] & 2) != 0);
 		}
 	}
@@ -10194,8 +10191,7 @@ public sealed class Plugin : MonoBehaviour
 		{
 			return;
 		}
-		Vector3 position = default(Vector3);
-		position..ctor(BitConverter.ToSingle(packet, 2), BitConverter.ToSingle(packet, 6), BitConverter.ToSingle(packet, 10));
+		Vector3 position = new Vector3(BitConverter.ToSingle(packet, 2), BitConverter.ToSingle(packet, 6), BitConverter.ToSingle(packet, 10));
 		if (!_remotePlayers.TryGetValue(remoteId, out RemotePlayerProxy value))
 		{
 			value = RemotePlayerProxy.Create(player, remoteId);
@@ -10800,8 +10796,7 @@ public sealed class Plugin : MonoBehaviour
 				_revivePrompt = CloneMenuText(val, (Transform)(object)parent, "CoopRevivePrompt", "", 28f * _lobbyUiUnit);
 				((TMP_Text)_revivePrompt).alignment = (TextAlignmentOptions)514;
 				RectTransform rectTransform = ((TMP_Text)_revivePrompt).rectTransform;
-				Vector2 val2 = default(Vector2);
-				val2..ctor(0.5f, 0.22f);
+				Vector2 val2 = new Vector2(0.5f, 0.22f);
 				rectTransform.anchorMax = val2;
 				rectTransform.anchorMin = val2;
 				rectTransform.pivot = new Vector2(0.5f, 0.5f);
@@ -11735,7 +11730,7 @@ public sealed class Plugin : MonoBehaviour
 		component.renderMode = (RenderMode)0;
 		component.sortingOrder = 32000;
 		CanvasScaler component2 = _uiRoot.GetComponent<CanvasScaler>();
-		component2.uiScaleMode = (ScaleMode)0;
+		component2.uiScaleMode = (CanvasScaler.ScaleMode)0;
 		component2.scaleFactor = 1f;
 		GameObject val = CreateUIObject("Co-op Panel", _uiRoot.transform);
 		RectTransform component3 = val.GetComponent<RectTransform>();
@@ -11835,7 +11830,7 @@ public sealed class Plugin : MonoBehaviour
 		//IL_0027: Expected O, but got Unknown
 		if (++_renderProbeCount >= 30)
 		{
-			Canvas.willRenderCanvases -= new WillRenderCanvases(ProbeCanvasDuringRender);
+			Canvas.willRenderCanvases -= new Canvas.WillRenderCanvases(ProbeCanvasDuringRender);
 			LogCanvasSnapshot("Canvas.willRenderCanvases after scene startup");
 			mainMenu[] array = Object.FindObjectsOfType<mainMenu>();
 			Log.LogInfo((object)$"Render-time mainMenu component count: {array.Length}.");
@@ -12084,7 +12079,7 @@ public sealed class Plugin : MonoBehaviour
 		//IL_009d: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0096: Unknown result type (might be due to invalid IL or missing references)
 		((Selectable)button).interactable = interactable;
-		((Selectable)button).transition = (Transition)(interactable ? 1 : 0);
+		((Selectable)button).transition = (Selectable.Transition)(interactable ? 1 : 0);
 		((Selectable)button).targetGraphic.CrossFadeColor(Color.white, 0f, true, true);
 		((Selectable)button).targetGraphic.color = (interactable ? new Color(0.23f, 0.38f, 0.22f, 1f) : new Color(0.28f, 0.28f, 0.28f, 1f));
 		TextMeshProUGUI componentInChildren = ((Component)button).GetComponentInChildren<TextMeshProUGUI>(true);

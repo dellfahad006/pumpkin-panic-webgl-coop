@@ -12,6 +12,7 @@ namespace PumpkinPanicCoop.Runtime
         private string nickname = "Farmer";
         private string status = "Connecting to multiplayer...";
         private bool expanded = true;
+        private PumpkinPanicCoop.Transport.PhotonSteamTransport transport;
 
         private void OnGUI()
         {
@@ -22,7 +23,7 @@ namespace PumpkinPanicCoop.Runtime
                 GUILayout.Label("Pumpkin Panic Co-op  •  " + PhotonNetwork.CurrentRoom.Name);
                 GUILayout.Label("Players: " + PhotonNetwork.CurrentRoom.PlayerCount + "/" + PhotonNetwork.CurrentRoom.MaxPlayers + (PhotonNetwork.IsMasterClient ? "  (Host)" : ""));
                 if (transport != null) GUILayout.Label("Packets/s  TX " + transport.SentEventsPerSecond + "  RX " + transport.ReceivedEventsPerSecond);
-                GUILayout.Label("Bytes/s  TX " + transport.SentBytesPerSecond + "  RX " + transport.ReceivedBytesPerSecond);
+                if (transport != null) GUILayout.Label("Bytes/s  TX " + transport.SentBytesPerSecond + "  RX " + transport.ReceivedBytesPerSecond);
                 if (GUILayout.Button("Copy room code: " + PhotonNetwork.CurrentRoom.Name)) GUIUtility.systemCopyBuffer = PhotonNetwork.CurrentRoom.Name;
                 if (GUILayout.Button("Leave co-op")) PumpkinPanicCoop.Plugin.LeaveRoomFromUI();
                 GUILayout.EndArea();
