@@ -20,7 +20,7 @@ from pathlib import Path, PurePosixPath
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PORT_ROOT = REPO_ROOT / "ci" / "pun-coop"
-SUPPORTED_PUN_VERSIONS = {"2.50", "2.56"}
+SUPPORTED_PUN_VERSIONS = {"2.41", "2.42", "2.50", "2.56"}
 
 
 def log(message: str) -> None:
