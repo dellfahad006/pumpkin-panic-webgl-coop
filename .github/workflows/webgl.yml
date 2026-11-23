@@ -680,6 +680,130 @@ jobs:
           retention-days: 7
 
 
+      - name: Add network counters to Unity loading screen
+        if: steps.mode.outputs.value == 'full'
+        run: |
+          python3 - <<'PYEOF'
+          import glob, re, sys
+
+          matches = glob.glob('project/Builds/**/index.html', recursive=True)
+          if len(matches) != 1:
+              raise SystemExit(f'Expected one generated index.html, found {len(matches)}')
+          path = matches[0]
+          html = open(path, encoding='utf-8').read()
+
+          if 'id="pp-network-stats"' in html:
+              raise SystemExit('Network stats already injected; refusing to duplicate them.')
+
+          # Place the four plain-text counters immediately beneath Unity's progress bar.
+          bar = re.search(r'(<div\s+id=["\\']unity-progress-bar-empty["\\'][^>]*>.*?</div>)', html, re.S)
+          if not bar:
+              raise SystemExit('Could not find Unity progress bar markup in generated index.html.')
+          stats = '''
+          <div id="pp-network-stats" aria-live="off">
+            <span>req: <b id="pp-req">0</b></span>
+            <span>transfer: <b id="pp-transfer">0 B</b></span>
+            <span>res: <b id="pp-res">0 B</b></span>
+            <span>fin: <b id="pp-fin">0</b></span>
+          </div>
+          '''
+          html = html[:bar.end()] + stats + html[bar.end():]
+
+          css = '''
+          <style id="pp-loading-style">
+            #unity-loading-bar { width: min( min(90vw, 520px), 520px) !important; }
+            #unity-progress-bar-empty {
+              display:block !important; position:relative !important;
+              width:100% !important; height:10px !important;
+              margin:12px 0 0 !important; overflow:hidden !important;
+              border-radius:8px !important; background:rgba(255,255,255,.22) !important;
+            }
+            #unity-progress-bar-full {
+              display:block !important; height:100% !important; min-width:0 !important;
+              border-radius:8px !important; background:#f2a23a !important;
+              transition:width .12s linear !important;
+            }
+            #pp-network-stats {
+              display:flex; flex-wrap:wrap; justify-content:center;
+              gap:8px 18px; width:100%; margin:11px auto 0;
+              color:rgba(255,255,255,.88); font:12px/1.4 Arial,sans-serif;
+              letter-spacing:.02em; text-align:center;
+            }
+            #pp-network-stats span { white-space:nowrap; }
+            #pp-network-stats b { color:#fff; font-weight:600; font-variant-numeric:tabular-nums; }
+          </style>
+          '''
+          if '</head>' not in html:
+              raise SystemExit('Could not find </head> in generated index.html.')
+          html = html.replace('</head>', css + '\\n</head>', 1)
+
+          # Keep Unity's own progress callback, but clamp and format its width
+          # so the visible bar always reflects the callback value cleanly.
+          progress_line = 'progressBarFull.style.width = 100 * progress + "%";'
+          if progress_line in html:
+              html = html.replace(
+                  progress_line,
+                  'progressBarFull.style.width = (Math.max(0, Math.min(1, progress)) * 100).toFixed(1) + "%";',
+                  1
+              )
+          else:
+              print('NOTICE: standard Unity progress callback line not found; leaving callback untouched.')
+
+          js = r"""
+          <script id="pp-network-stats-script">
+          (function () {
+            var ids = ['pp-req', 'pp-transfer', 'pp-res', 'pp-fin'];
+            var nodes = ids.map(function (id) { return document.getElementById(id); });
+            if (nodes.some(function (node) { return !node; })) return;
+
+            function formatBytes(value) {
+              if (!Number.isFinite(value) || value <= 0) return '0 B';
+              var units = ['B', 'KB', 'MB', 'GB'];
+              var index = Math.min(Math.floor(Math.log(value) / Math.log(1024)), units.length - 1);
+              return (value / Math.pow(1024, index)).toFixed(index === 0 ? 0 : 2) + ' ' + units[index];
+            }
+
+            function update() {
+              var entries = performance.getEntriesByType('resource');
+              var transfer = 0;
+              var decoded = 0;
+              var finished = 0;
+              entries.forEach(function (entry) {
+                if (entry.initiatorType === 'xmlhttprequest' ||
+                    entry.initiatorType === 'fetch' ||
+                    entry.name.indexOf('.data') !== -1 ||
+                    entry.name.indexOf('.wasm') !== -1 ||
+                    entry.name.indexOf('.framework.js') !== -1 ||
+                    entry.name.indexOf('.loader.js') !== -1) {
+                  transfer += entry.transferSize || 0;
+                  decoded += entry.decodedBodySize || 0;
+                  finished += 1;
+                }
+              });
+              nodes[0].textContent = String(entries.length);
+              nodes[1].textContent = formatBytes(transfer);
+              nodes[2].textContent = formatBytes(decoded);
+              nodes[3].textContent = String(finished);
+            }
+
+            update();
+            var timer = window.setInterval(function () {
+              update();
+              var loading = document.getElementById('unity-loading-bar');
+              if (!loading || getComputedStyle(loading).display === 'none') {
+                window.clearInterval(timer);
+              }
+            }, 250);
+          })();
+          </script>
+          """
+          if '</body>' not in html:
+              raise SystemExit('Could not find </body> in generated index.html.')
+          html = html.replace('</body>', js + '\\n</body>', 1)
+          open(path, 'w', encoding='utf-8').write(html)
+          print('Injected req / transfer / res / fin counters beneath Unity loading bar.')
+          PYEOF
+
       - name: Prepare build folder
         if: steps.mode.outputs.value == 'full'
         run: |
